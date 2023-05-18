@@ -4,7 +4,7 @@ type Environment struct {
 	Name      string
 	Tag       string
 	Namespace string
-	Services  []string
+	Boxes     []Box
 }
 
 type EnvironmentService struct {

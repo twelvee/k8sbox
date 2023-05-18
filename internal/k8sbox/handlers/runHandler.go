@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	model "github.com/k8s-box/k8sbox/internal/k8sbox/models"
@@ -13,6 +14,7 @@ func HandleRunCommand(tomlFile string, context context.Context) structs.Environm
 	if err != nil {
 		panic(fmt.Sprintf("failed to run environment. %#v", err))
 	}
-	fmt.Println(result)
+	s, _ := json.Marshal(result)
+	fmt.Println(string(s))
 	return result
 }

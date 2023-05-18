@@ -1,34 +1,33 @@
 name = "test environment"
 namespace = ""
 tag = "test-env-1"
+type = "helm"
 
-[environment]
-    type = "helm"
-    [[boxes]]
-    chart = "service1/Chart.yaml"
-    values = "service1/Values.yaml"
-    tag = "service1"
-    [[applications]]
+[[boxes]]
+chart = "box1/Chart.yaml"
+values = "box1/Values.yaml"
+tag = "box1"
+    [[boxes.applications]]
     name = "service-nginx-1"
-    chart = "service1/templates/api-nginx-service.yaml"
-    [[applications]]
-    name = "service-nginx-1"
-    chart = "service1/templates/api-nginx-deployment.yaml"
+    chart = "box1/templates/api-nginx-service.yaml"
+    [[boxes.applications]]
+    name = "deployment-nginx-1"
+    chart = "box1/templates/api-nginx-deployment.yaml"
 
-    [[boxes]]
-    chart = "service2/Chart.yaml"
-    values = "service2/Values.yaml"
-    tag = "service2"
-    [[applications]]
+[[boxes]]
+chart = "box2/Chart.yaml"
+values = "box2/Values.yaml"
+tag = "box2"
+    [[boxes.applications]]
     name = "service-nginx-2"
-    chart = "service2/templates/api-nginx-service.yaml"
-    [[applications]]
-    name = "service-nginx-2"
-    chart = "service2/templates/api-nginx-deployment.yaml"
+    chart = "box2/templates/api-nginx-service.yaml"
+    [[boxes.applications]]
+    name = "deployment-nginx-2"
+    chart = "box2/templates/api-nginx-deployment.yaml"
 
-    [[boxes]]
-    chart = "ingress/Chart.yaml"
-    values = "ingress/Values.yaml"
-    [[applications]]
+[[boxes]]
+chart = "ingress/Chart.yaml"
+values = "ingress/Values.yaml"
+    [[boxes.applications]]
     name = "www-ingress-toml"
     chart = "ingress/templates/ingress.yaml"
