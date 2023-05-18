@@ -1,0 +1,34 @@
+name = "test environment"
+namespace = ""
+tag = "test-env-1"
+
+[environment]
+    type = "helm"
+    [[boxes]]
+    chart = "service1/Chart.yaml"
+    values = "service1/Values.yaml"
+    tag = "service1"
+    [[applications]]
+    name = "service-nginx-1"
+    chart = "service1/templates/api-nginx-service.yaml"
+    [[applications]]
+    name = "service-nginx-1"
+    chart = "service1/templates/api-nginx-deployment.yaml"
+
+    [[boxes]]
+    chart = "service2/Chart.yaml"
+    values = "service2/Values.yaml"
+    tag = "service2"
+    [[applications]]
+    name = "service-nginx-2"
+    chart = "service2/templates/api-nginx-service.yaml"
+    [[applications]]
+    name = "service-nginx-2"
+    chart = "service2/templates/api-nginx-deployment.yaml"
+
+    [[boxes]]
+    chart = "ingress/Chart.yaml"
+    values = "ingress/Values.yaml"
+    [[applications]]
+    name = "www-ingress-toml"
+    chart = "ingress/templates/ingress.yaml"
