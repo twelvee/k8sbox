@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: www-ingress
+spec:
+  rules:
+    - host: "12e.fun"
+      http:
+        paths:
+          - path: /{{ .Values.domain }}
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ .Values.Environment }}-{{ .Release.Name }}"
+                port:
+                  number: 80
+          - path: /new-{{ .Values.domain }}
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ .Values.Environment }}-{{ .Release.Name }}-new"
+                port:
+                  number: 80
