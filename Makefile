@@ -1,5 +1,5 @@
 override APP_NAME=k8sbox
-override GO_VERSION=1.18
+override GO_VERSION=1.19
 
 GOOS?=$(shell go env GOOS || echo linux)
 GOARCH?=$(shell go env GOARCH || echo amd64)
