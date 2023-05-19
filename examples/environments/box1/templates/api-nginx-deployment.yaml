@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "{{ .Values.Environment }}-{{ .Release.Name }}-deployment-new"
+  name: "{{ .Values.Environment }}-{{ .Release.Name }}"
   labels:
-    app.kubernetes.io/name: "{{ .Release.Name }}-new"
+    app.kubernetes.io/name: "{{ .Release.Name }}-box1"
 spec:
   revisionHistoryLimit: 0
   replicas: 1

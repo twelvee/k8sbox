@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "{{ .Values.Environment }}-{{ .Release.Name }}-deployment"
+  name: "{{ .Values.Environment }}-{{ .Release.Name }}-box2"
   labels:
     app.kubernetes.io/name: "{{ .Release.Name }}"
 spec:

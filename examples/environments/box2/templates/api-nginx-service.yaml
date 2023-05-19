@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: "{{ .Values.Environment }}-{{ .Release.Name }}"
+  name: "{{ .Values.Environment }}-{{ .Release.Name }}-box2"
   annotations:
     prometheus_io_probe: "true"
     prometheus_io_path: ""
     prometheus_io_port: "80"
   labels:
-    helm/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    helm/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}-box2"
 spec:
   ports:
     - port: 80
@@ -15,5 +15,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app.kubernetes.io/name: "{{ .Values.Environment }}-{{ .Release.Name }}"
-    app.kubernetes.io/instance: "{{ .Values.Environment }}-{{ .Release.Name }}"
+    app.kubernetes.io/name: "{{ .Values.Environment }}-{{ .Release.Name }}-box2"
+    app.kubernetes.io/instance: "{{ .Values.Environment }}-{{ .Release.Name }}-box2"
