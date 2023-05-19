@@ -1,6 +1,7 @@
 package formatters
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -10,7 +11,7 @@ import (
 )
 
 type TomlFormatter struct {
-	GetEnvironmentFromToml func(string) (structs.Environment, string)
+	GetEnvironmentFromToml func(string) (structs.Environment, string, error)
 }
 
 func NewTomlFormatter() TomlFormatter {
@@ -19,17 +20,19 @@ func NewTomlFormatter() TomlFormatter {
 	}
 }
 
-func getEnvironmentFromToml(tomlFile string) (structs.Environment, string) {
+func getEnvironmentFromToml(tomlFile string) (structs.Environment, string, error) {
 	var environment structs.Environment
-	data, err := os.ReadFile(tomlFile)
+
 	info, err := os.Stat(tomlFile)
-	boxesPath := strings.ReplaceAll(tomlFile, info.Name(), "")
 	if err != nil {
-		panic(fmt.Sprintf("File %s not found", tomlFile))
+		return structs.Environment{}, "", errors.New(fmt.Sprintf("File %s not found", tomlFile))
 	}
+	boxesPath := strings.ReplaceAll(tomlFile, info.Name(), "")
+	data, err := os.ReadFile(tomlFile)
+
 	err = toml.Unmarshal(data, &environment)
 	if err != nil {
 		panic(err)
 	}
-	return environment, boxesPath
+	return environment, boxesPath, nil
 }

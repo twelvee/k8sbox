@@ -20,7 +20,12 @@ func RunEnvironment(tomlFile string) (structs.Environment, error) {
 
 func lookForEnvironmentStep(tomlFile string) (structs.Environment, string) {
 	fmt.Print("Looking for environment...")
-	environment, runDirectory := k8sbox.GetTomlFormatter().GetEnvironmentFromToml(tomlFile)
+	environment, runDirectory, err := k8sbox.GetTomlFormatter().GetEnvironmentFromToml(tomlFile)
+	if err != nil {
+		fmt.Println(" FAIL :(")
+		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+		os.Exit(1)
+	}
 	fmt.Println(" OK")
 	return environment, runDirectory
 }
