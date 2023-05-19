@@ -1,6 +1,6 @@
 module github.com/k8s-box/k8sbox
 
-go 1.17
+go 1.18
 
 require (
 	github.com/BurntSushi/toml v1.2.1

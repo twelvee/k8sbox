@@ -8,6 +8,7 @@ type Environment struct {
 }
 
 type EnvironmentService struct {
-	DeployEnvironment   func(Environment) (Environment, error)
-	ValidateEnvironment func(Environment) error
+	DeployEnvironment         func(Environment, string) (Environment, error)
+	CreateTempDeployDirectory func(Environment, string, string) (string, error)
+	ValidateEnvironment       func(Environment) error
 }

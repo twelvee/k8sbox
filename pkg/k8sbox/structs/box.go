@@ -11,3 +11,11 @@ type Box struct {
 type BoxService struct {
 	ValidateBoxes func([]Box, string, ApplicationService) error
 }
+
+func Helm() string {
+	return "helm"
+}
+
+func Plain() string {
+	return "plain"
+}
