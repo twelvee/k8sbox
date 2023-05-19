@@ -8,6 +8,7 @@ import (
 
 	"github.com/k8s-box/k8sbox/pkg/k8sbox/structs"
 	"github.com/k8s-box/k8sbox/pkg/k8sbox/utils"
+	helmclient "github.com/mittwald/go-helm-client"
 )
 
 func NewEnvironmentService() structs.EnvironmentService {
@@ -18,8 +19,44 @@ func NewEnvironmentService() structs.EnvironmentService {
 	}
 }
 
+func getHelmClient() (helmclient.Client, error) {
+	kubeconfig, err := os.ReadFile(os.Getenv("KUBECONFIG"))
+	if err != nil {
+		return nil, err
+	}
+	opt := &helmclient.KubeConfClientOptions{
+		Options: &helmclient.Options{
+			Namespace:        "default",
+			RepositoryCache:  "/tmp/.helmcache",
+			RepositoryConfig: "/tmp/.helmrepo",
+			Debug:            true,
+			Linting:          true,
+		},
+		KubeContext: "",
+		KubeConfig:  kubeconfig,
+	}
+
+	client, err := helmclient.NewClientFromKubeConf(opt, helmclient.Burst(100), helmclient.Timeout(10e9))
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
 func deployEnvironment(environment structs.Environment, tempDir string) (structs.Environment, error) {
 	//
+	cluster, err := getHelmClient()
+	if err != nil {
+		return structs.Environment{}, err
+	}
+
+	// temp solution to check cluster access
+	// TODO: make an own method
+	_, err = cluster.ListDeployedReleases()
+	if err != nil {
+		return structs.Environment{}, err
+	}
 	return environment, nil
 }
 
