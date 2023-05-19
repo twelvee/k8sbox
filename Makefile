@@ -5,8 +5,7 @@ GOOS?=$(shell go env GOOS || echo linux)
 GOARCH?=$(shell go env GOARCH || echo amd64)
 CGO_ENABLED?=0
 
-DOCKER_REGISTRY?=registry.github.com
-DOCKER_IMAGE?=${DOCKER_REGISTRY}/k8s-box/${APP_NAME}
+DOCKER_IMAGE?=${APP_NAME}
 DOCKER_TAG?=current
 
 ifeq (, $(shell which docker))
@@ -50,3 +49,14 @@ build:
 				-mod vendor \
 				-o /project/bin/${APP_NAME} \
 				-v /project/cmd/${APP_NAME}
+
+.PHONY: docker-build
+docker-build:
+	@docker build \
+		-f ${PWD}/build/docker/${APP_NAME}.Dockerfile \
+		-t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+
+.PHONY: docker-push
+docker-push:
+	@docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}
+	@docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
