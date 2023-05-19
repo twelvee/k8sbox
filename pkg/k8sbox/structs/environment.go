@@ -8,5 +8,6 @@ type Environment struct {
 }
 
 type EnvironmentService struct {
-	DeployEnvironment func(Environment) (Environment, error)
+	DeployEnvironment   func(Environment) (Environment, error)
+	ValidateEnvironment func(Environment) error
 }

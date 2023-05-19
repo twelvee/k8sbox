@@ -1,9 +1,9 @@
 name = "test environment"
 namespace = ""
 tag = "test-env-1"
-type = "helm"
 
 [[boxes]]
+type = "helm"
 chart = "box1/Chart.yaml"
 values = "box1/Values.yaml"
 tag = "box1"
@@ -15,6 +15,7 @@ tag = "box1"
     chart = "box1/templates/api-nginx-deployment.yaml"
 
 [[boxes]]
+type = "helm"
 chart = "box2/Chart.yaml"
 values = "box2/Values.yaml"
 tag = "box2"
@@ -26,6 +27,7 @@ tag = "box2"
     chart = "box2/templates/api-nginx-deployment.yaml"
 
 [[boxes]]
+type = "helm"
 chart = "ingress/Chart.yaml"
 values = "ingress/Values.yaml"
     [[boxes.applications]]

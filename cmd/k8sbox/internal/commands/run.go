@@ -19,5 +19,6 @@ func NewRunCommand() *cobra.Command {
 		},
 	}
 	command.Flags().StringVarP(&tomlFile, "file", "f", "", "Environment template file (toml)")
+	command.MarkFlagRequired("file")
 	return command
 }
