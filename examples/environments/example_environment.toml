@@ -1,11 +1,12 @@
 name = "test environment"
-namespace = ""
+namespace = "test"
 tag = "test-env-1"
 
 [[boxes]]
 type = "helm"
 chart = "box1/Chart.yaml"
-values = "box1/Values.yaml"
+values = "box1/values.yaml"
+name = "first-box"
 tag = "box1"
     [[boxes.applications]]
     name = "service-nginx-1"
@@ -17,7 +18,8 @@ tag = "box1"
 [[boxes]]
 type = "helm"
 chart = "box2/Chart.yaml"
-values = "box2/Values.yaml"
+values = "box2/values.yaml"
+name = "second-box"
 tag = "box2"
     [[boxes.applications]]
     name = "service-nginx-2"
@@ -29,7 +31,8 @@ tag = "box2"
 [[boxes]]
 type = "helm"
 chart = "ingress/Chart.yaml"
-values = "ingress/Values.yaml"
+name = "third-box"
+values = "ingress/values.yaml"
     [[boxes.applications]]
     name = "www-ingress-toml"
     chart = "ingress/templates/ingress.yaml"

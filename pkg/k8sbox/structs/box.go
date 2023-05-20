@@ -1,11 +1,14 @@
 package structs
 
 type Box struct {
-	Tag          string
-	Type         string
-	Applications []Application
-	Chart        string
-	Values       string
+	Tag           string
+	Type          string
+	Applications  []Application
+	Chart         string
+	Values        string
+	Namespace     string
+	Name          string
+	TempDirectory string
 }
 
 type BoxService struct {

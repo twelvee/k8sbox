@@ -2,13 +2,15 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	helmclient "github.com/mittwald/go-helm-client"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/kube"
 )
 
 func NewEnvironmentService() structs.EnvironmentService {
@@ -19,96 +21,77 @@ func NewEnvironmentService() structs.EnvironmentService {
 	}
 }
 
-func getHelmClient() (helmclient.Client, error) {
-	kubeconfig, err := os.ReadFile(os.Getenv("KUBECONFIG"))
-	if err != nil {
-		return nil, err
-	}
-	opt := &helmclient.KubeConfClientOptions{
-		Options: &helmclient.Options{
-			Namespace:        "default",
-			RepositoryCache:  "/tmp/.helmcache",
-			RepositoryConfig: "/tmp/.helmrepo",
-			Debug:            true,
-			Linting:          true,
-		},
-		KubeContext: "",
-		KubeConfig:  kubeconfig,
-	}
+func GetActionConfig(namespace string) *action.Configuration {
+	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "minikube", namespace)
+	actionConfig := new(action.Configuration)
+	actionConfig.Init(restClientGetter, namespace, "secret", func(format string, v ...interface{}) {
+		fmt.Sprintf(format, v)
+	})
 
-	client, err := helmclient.NewClientFromKubeConf(opt, helmclient.Burst(100), helmclient.Timeout(10e9))
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
+	return actionConfig
 }
 
-func deployEnvironment(environment structs.Environment, tempDir string) (structs.Environment, error) {
-	//
-	cluster, err := getHelmClient()
-	if err != nil {
-		return structs.Environment{}, err
+func deployEnvironment(environment *structs.Environment) error {
+	for _, box := range environment.Boxes {
+		UninstallBox(&box)
+
+		_, err := InstallBox(&box)
+		if err != nil {
+			return err
+		}
 	}
 
-	// temp solution to check cluster access
-	// TODO: make an own method
-	_, err = cluster.ListDeployedReleases()
-	if err != nil {
-		return structs.Environment{}, err
-	}
-	return environment, nil
+	//return releases, nil
+	return nil
 }
 
-func createTempDeployDirectory(environment structs.Environment, runDirectory string, shortID string) (string, error) {
+func createTempDeployDirectory(environment *structs.Environment, runDirectory string, shortID string) (string, error) {
 	tempFolder, err := utils.CreateTempFolder(shortID)
 	if err != nil {
 		return "", err
 	}
-
-	err = moveEnvironmentFilesToTempDirectory(environment, runDirectory, tempFolder)
+	environment.TempDirectory = tempFolder
+	err = moveEnvironmentFilesToTempDirectory(environment, runDirectory)
 	if err != nil {
 		return "", err
 	}
-
-	defer os.RemoveAll(tempFolder)
 	return tempFolder, nil
 }
 
-func moveEnvironmentFilesToTempDirectory(environment structs.Environment, runDirectory string, tempFolder string) error {
-	for _, box := range environment.Boxes {
-		boxTempFolder := strings.Join([]string{tempFolder, utils.GetShortID(8)}, "/")
-		os.Mkdir(boxTempFolder, 0750)
-		boxChartContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, box.Chart}, ""))
+func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDirectory string) error {
+	for bi, _ := range environment.Boxes {
+		environment.Boxes[bi].TempDirectory = strings.Join([]string{environment.TempDirectory, utils.GetShortID(8)}, "/")
+		os.Mkdir(environment.Boxes[bi].TempDirectory, 0750)
+		boxChartContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Chart}, ""))
 		if err != nil {
 			return err
 		}
 
-		err = ioutil.WriteFile(strings.Join([]string{boxTempFolder, "Chart.yaml"}, "/"), boxChartContent, 0644)
+		err = ioutil.WriteFile(strings.Join([]string{environment.Boxes[bi].TempDirectory, "Chart.yaml"}, "/"), boxChartContent, 0644)
 		if err != nil {
 			return err
 		}
 
-		boxValuesContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, box.Values}, ""))
+		boxValuesContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Values}, ""))
 		if err != nil {
 			return err
 		}
 
-		err = ioutil.WriteFile(strings.Join([]string{boxTempFolder, "Values.yaml"}, "/"), boxValuesContent, 0644)
+		err = ioutil.WriteFile(strings.Join([]string{environment.Boxes[bi].TempDirectory, "values.yaml"}, "/"), boxValuesContent, 0644)
 		if err != nil {
 			return err
 		}
 
-		for _, application := range box.Applications {
-			applicationTempFolder := strings.Join([]string{boxTempFolder, "templates"}, "/")
-			os.Mkdir(applicationTempFolder, 0750)
+		for ai, _ := range environment.Boxes[bi].Applications {
+			environment.Boxes[bi].Applications[ai].TempDirectory = strings.Join([]string{environment.Boxes[bi].TempDirectory, "templates"}, "/")
+			os.Mkdir(environment.Boxes[bi].Applications[ai].TempDirectory, 0750)
 
-			applicationContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, application.Chart}, ""))
+			applicationContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Applications[ai].Chart}, ""))
 			if err != nil {
 				return err
 			}
 
-			err = ioutil.WriteFile(strings.Join([]string{applicationTempFolder, utils.GetShortID(6), ".yaml"}, ""), applicationContent, 0644)
+			err = ioutil.WriteFile(strings.Join([]string{environment.Boxes[bi].Applications[ai].TempDirectory, "/", utils.GetShortID(6), ".yaml"}, ""), applicationContent, 0644)
 			if err != nil {
 				return err
 			}
@@ -117,7 +100,7 @@ func moveEnvironmentFilesToTempDirectory(environment structs.Environment, runDir
 	return nil
 }
 
-func validateEnvironment(environment structs.Environment) error {
+func validateEnvironment(environment *structs.Environment) error {
 	var messages []string
 	if len(strings.TrimSpace(environment.Name)) == 0 {
 		messages = append(messages, "Environment name is missing")

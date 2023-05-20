@@ -1,12 +1,17 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 func NewBoxService() structs.BoxService {
@@ -54,4 +59,69 @@ func validateBoxes(boxes []structs.Box, runDirectory string, applicationService 
 		return errors.New(strings.Join(messages, "\n\r"))
 	}
 	return nil
+}
+
+func InstallBox(box *structs.Box) (*release.Release, error) {
+	if len(strings.TrimSpace(box.Namespace)) == 0 {
+		box.Namespace = strings.ToLower(strings.Join([]string{"k8srun", utils.GetShortNamespace(8)}, "-"))
+	}
+	if len(strings.TrimSpace(box.Name)) == 0 {
+		box.Name = strings.ToLower(strings.Join([]string{"k8srun", utils.GetShortNamespace(8)}, "-"))
+	}
+	config := GetActionConfig(box.Namespace)
+	client := action.NewInstall(config)
+	client.UseReleaseName = true
+	client.Namespace = box.Namespace
+	client.ReleaseName = box.Name
+	client.CreateNamespace = true
+	client.Replace = true
+	chart, err := loader.Load(box.TempDirectory)
+	if err != nil {
+		return nil, err
+	}
+	r, err := client.RunWithContext(context.Background(), chart, chart.Values)
+	if err != nil {
+		return r, err
+	}
+	return r, nil
+}
+
+func UpgradeBox(box *structs.Box) (*release.Release, error) {
+	if len(strings.TrimSpace(box.Namespace)) == 0 {
+		box.Namespace = strings.ToLower(strings.Join([]string{"k8srun", utils.GetShortNamespace(8)}, "-"))
+	}
+	if len(strings.TrimSpace(box.Name)) == 0 {
+		box.Name = strings.ToLower(strings.Join([]string{"k8srun", utils.GetShortNamespace(8)}, "-"))
+	}
+	config := GetActionConfig(box.Namespace)
+	client := action.NewUpgrade(config)
+	client.Namespace = box.Namespace
+	client.Install = true
+	client.CleanupOnFail = true
+	chart, err := loader.Load(box.TempDirectory)
+	if err != nil {
+		return nil, err
+	}
+	r, err := client.RunWithContext(context.Background(), box.Name, chart, chart.Values)
+	if err != nil {
+		return r, err
+	}
+	return r, nil
+}
+
+func UninstallBox(box *structs.Box) (*release.UninstallReleaseResponse, error) {
+	if len(strings.TrimSpace(box.Name)) == 0 {
+		box.Name = strings.ToLower(strings.Join([]string{"k8srun", utils.GetShortNamespace(8)}, "-"))
+	}
+	config := GetActionConfig(box.Namespace)
+	client := action.NewUninstall(config)
+	r, err := client.Run(box.Name)
+	if err != nil {
+		return r, err
+	}
+	return r, nil
+}
+
+func GetBox(box structs.Box) (*release.Release, error) {
+	return nil, nil
 }

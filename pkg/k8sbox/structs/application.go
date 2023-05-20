@@ -1,9 +1,10 @@
 package structs
 
 type Application struct {
-	Name  string
-	Tag   string
-	Chart string
+	Name          string
+	Tag           string
+	Chart         string
+	TempDirectory string
 }
 
 type ApplicationService struct {
