@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/k8s-box/k8sbox/cmd/k8sbox/internal/commands"
+	"github.com/twelvee/k8sbox/cmd/k8sbox/internal/commands"
 )
 
 func main() {

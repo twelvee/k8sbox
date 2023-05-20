@@ -1,4 +1,4 @@
-module github.com/k8s-box/k8sbox
+module github.com/twelvee/k8sbox
 
 go 1.19
 

@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/k8s-box/k8sbox/pkg/k8sbox/structs"
-	"github.com/k8s-box/k8sbox/pkg/k8sbox/utils"
 	helmclient "github.com/mittwald/go-helm-client"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 )
 
 func NewEnvironmentService() structs.EnvironmentService {

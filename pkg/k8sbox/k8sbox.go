@@ -1,7 +1,7 @@
 package k8sbox
 
 import (
-	"github.com/k8s-box/k8sbox/pkg/k8sbox/structs"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 )
 
 func GetEnvironmentStruct() structs.Environment {

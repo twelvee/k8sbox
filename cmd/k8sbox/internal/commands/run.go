@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"github.com/k8s-box/k8sbox/internal/k8sbox/handlers"
 	"github.com/spf13/cobra"
+	"github.com/twelvee/k8sbox/internal/k8sbox/handlers"
 )
 
 func NewRunCommand() *cobra.Command {

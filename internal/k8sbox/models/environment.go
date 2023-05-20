@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/k8s-box/k8sbox/internal/k8sbox"
-	"github.com/k8s-box/k8sbox/pkg/k8sbox/structs"
-	"github.com/k8s-box/k8sbox/pkg/k8sbox/utils"
+	"github.com/twelvee/k8sbox/internal/k8sbox"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 )
 
 func RunEnvironment(tomlFile string) (structs.Environment, error) {

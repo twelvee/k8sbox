@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/k8s-box/k8sbox/pkg/k8sbox/structs"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 )
 
 type TomlFormatter struct {

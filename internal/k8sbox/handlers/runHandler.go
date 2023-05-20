@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	model "github.com/k8s-box/k8sbox/internal/k8sbox/models"
-	"github.com/k8s-box/k8sbox/pkg/k8sbox/structs"
+	model "github.com/twelvee/k8sbox/internal/k8sbox/models"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 )
 
 func HandleRunCommand(tomlFile string, context context.Context) structs.Environment {

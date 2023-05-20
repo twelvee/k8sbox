@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/k8s-box/k8sbox/pkg/k8sbox/structs"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 )
 
 func NewBoxService() structs.BoxService {
