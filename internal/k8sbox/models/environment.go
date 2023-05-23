@@ -12,8 +12,10 @@ import (
 
 func RunEnvironment(tomlFile string) error {
 	environment, runDirectory := lookForEnvironmentStep(tomlFile)
+	expandEnvironmentVariablesStep(&environment)
+	expandBoxVariablesStep(&environment)
 	isSaved := checkIfEnvironmentIsSavedStep(environment)
-	validateEnvironmentStep(environment, runDirectory)
+	validateEnvironmentStep(&environment, runDirectory)
 	validateBoxesStep(&environment, runDirectory)
 	if isSaved {
 		checkIfEnvironmentHasSameBoxesStep(&environment)
@@ -27,6 +29,8 @@ func RunEnvironment(tomlFile string) error {
 
 func DeleteEnvironment(tomlFile string) error {
 	environment, _ := lookForEnvironmentStep(tomlFile)
+	expandEnvironmentVariablesStep(&environment)
+	expandBoxVariablesStep(&environment)
 	isSaved := checkIfEnvironmentIsSavedStep(environment)
 	if !isSaved {
 		return errors.New("Saved environment not found")
@@ -48,6 +52,18 @@ func lookForEnvironmentStep(tomlFile string) (structs.Environment, string) {
 	}
 	fmt.Println(" OK")
 	return environment, runDirectory
+}
+
+func expandEnvironmentVariablesStep(environment *structs.Environment) {
+	fmt.Print("Expanding environment variables...")
+	k8sbox.GetEnvironmentService().ExpandVariables(environment)
+	fmt.Println(" OK")
+}
+
+func expandBoxVariablesStep(environment *structs.Environment) {
+	fmt.Print("Expanding box variables...")
+	environment.Boxes = k8sbox.GetBoxService().ExpandBoxVariables(environment.Boxes)
+	fmt.Println(" OK")
 }
 
 func checkIfEnvironmentIsSavedStep(environment structs.Environment) bool {
@@ -90,9 +106,9 @@ func checkIfEnvironmentHasSameBoxesStep(environment *structs.Environment) {
 	}
 }
 
-func validateEnvironmentStep(environment structs.Environment, runDirectory string) {
+func validateEnvironmentStep(environment *structs.Environment, runDirectory string) {
 	fmt.Print("Validating environment...")
-	err := k8sbox.GetEnvironmentService().ValidateEnvironment(&environment, runDirectory)
+	err := k8sbox.GetEnvironmentService().ValidateEnvironment(environment, runDirectory)
 	if err != nil {
 		fmt.Println(" FAIL :(")
 		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)

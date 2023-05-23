@@ -14,4 +14,5 @@ type EnvironmentService struct {
 	DeleteEnvironment         func(*Environment) error
 	CreateTempDeployDirectory func(*Environment, string, bool) (string, error)
 	ValidateEnvironment       func(*Environment, string) error
+	ExpandVariables           func(*Environment)
 }

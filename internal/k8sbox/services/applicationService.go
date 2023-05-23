@@ -11,6 +11,7 @@ import (
 func NewApplicationService() structs.ApplicationService {
 	return structs.ApplicationService{
 		ValidateApplications: validateApplications,
+		ExpandApplications:   ExpandApplications,
 	}
 }
 
@@ -31,4 +32,14 @@ func validateApplications(applications []structs.Application, runDirectory strin
 		}
 	}
 	return messages
+}
+
+func ExpandApplications(applications []structs.Application) []structs.Application {
+	var newApplications []structs.Application
+	for _, a := range applications {
+		a.Name = os.ExpandEnv(a.Name)
+		a.Chart = os.ExpandEnv(a.Chart)
+		newApplications = append(newApplications, a)
+	}
+	return newApplications
 }

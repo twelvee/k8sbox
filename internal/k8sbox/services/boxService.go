@@ -17,11 +17,12 @@ import (
 
 func NewBoxService() structs.BoxService {
 	return structs.BoxService{
-		ProcessEnvValues: processEnvValues,
-		ValidateBoxes:    validateBoxes,
-		FillEmptyFields:  fillEmptyFields,
-		UninstallBox:     UninstallBox,
-		GetBox:           GetBox,
+		ProcessEnvValues:   processEnvValues,
+		ValidateBoxes:      validateBoxes,
+		FillEmptyFields:    fillEmptyFields,
+		UninstallBox:       UninstallBox,
+		GetBox:             GetBox,
+		ExpandBoxVariables: expandBoxVariables,
 	}
 }
 
@@ -154,4 +155,19 @@ func GetBox(box *structs.Box) (*release.Release, error) {
 
 	r, err := client.Run(box.Name)
 	return r, err
+}
+
+func expandBoxVariables(boxes []structs.Box) []structs.Box {
+	var newBoxes []structs.Box
+
+	for _, b := range boxes {
+		b.Name = os.ExpandEnv(b.Name)
+		b.Namespace = os.ExpandEnv(b.Namespace)
+		b.Type = os.ExpandEnv(b.Type)
+		b.Chart = os.ExpandEnv(b.Chart)
+		b.Values = os.ExpandEnv(b.Values)
+		b.Applications = ExpandApplications(b.Applications)
+		newBoxes = append(newBoxes, b)
+	}
+	return newBoxes
 }

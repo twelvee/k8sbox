@@ -19,7 +19,15 @@ func NewEnvironmentService() structs.EnvironmentService {
 		DeleteEnvironment:         deleteEnvironment,
 		CreateTempDeployDirectory: createTempDeployDirectory,
 		ValidateEnvironment:       validateEnvironment,
+		ExpandVariables:           expandVariables,
 	}
+}
+
+func expandVariables(environment *structs.Environment) {
+	environment.Name = os.ExpandEnv(environment.Name)
+	environment.Id = os.ExpandEnv(environment.Id)
+	environment.Namespace = os.ExpandEnv(environment.Namespace)
+	environment.Variables = os.ExpandEnv(environment.Variables)
 }
 
 func deleteEnvironment(environment *structs.Environment) error {
