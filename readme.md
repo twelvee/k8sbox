@@ -3,7 +3,7 @@
 <img src="https://images2.imgbox.com/db/44/P0ALO0l4_o.gif"><br>
 
 ### Docs
-All documentation is available on https://k8sbox.run/
+All documentation is available on https://docs.k8sbox.run/
 
 ### Docker image
 https://hub.docker.com/r/twelvee/k8sbox/tags
