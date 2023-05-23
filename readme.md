@@ -1,8 +1,5 @@
 # k8sbox
-**Helpful tool to replicate your k8s environments**
+**Helpful tool to replicate your k8s environments** <br>
+<img src="https://images2.imgbox.com/db/44/P0ALO0l4_o.gif"><br>
 
-### Run local build with docker
-<code>
-make docker-build<br>
-docker run -v ${PWD}/examples/environments:/tmp/environments k8sbox:current run -f /tmp/environments/example_environment.toml
-</code>
+### Docs WIP
