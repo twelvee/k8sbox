@@ -13,10 +13,12 @@ type Box struct {
 }
 
 type BoxService struct {
-	ValidateBoxes   func([]Box, string) error
-	FillEmptyFields func(*Box, string) error
-	UninstallBox    func(*Box, string) (*release.UninstallReleaseResponse, error)
-	GetBox          func(*Box) (*release.Release, error)
+	ProcessEnvValues   func(map[string]interface{}, string) map[string]interface{}
+	ValidateBoxes      func([]Box) error
+	FillEmptyFields    func(*Box, string) error
+	UninstallBox       func(*Box, Environment) (*release.UninstallReleaseResponse, error)
+	GetBox             func(*Box) (*release.Release, error)
+	ExpandBoxVariables func([]Box) []Box
 }
 
 func Helm() string {

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 	"helm.sh/helm/v3/pkg/action"
@@ -16,10 +17,12 @@ import (
 
 func NewBoxService() structs.BoxService {
 	return structs.BoxService{
-		ValidateBoxes:   validateBoxes,
-		FillEmptyFields: fillEmptyFields,
-		UninstallBox:    UninstallBox,
-		GetBox:          GetBox,
+		ProcessEnvValues:   processEnvValues,
+		ValidateBoxes:      validateBoxes,
+		FillEmptyFields:    fillEmptyFields,
+		UninstallBox:       UninstallBox,
+		GetBox:             GetBox,
+		ExpandBoxVariables: expandBoxVariables,
 	}
 }
 
@@ -38,12 +41,26 @@ func fillEmptyFields(box *structs.Box, environmentNamespace string) error {
 	return nil
 }
 
-func validateBoxes(boxes []structs.Box, runDirectory string) error {
+func processEnvValues(values map[string]interface{}, dotenvPath string) map[string]interface{} {
+	if len(dotenvPath) > 0 {
+		godotenv.Load(dotenvPath)
+	}
+	for k, v := range values {
+		if len(os.ExpandEnv(fmt.Sprintf("%v", v))) == 0 {
+			continue
+		}
+		values[k] = os.ExpandEnv(fmt.Sprintf("%v", v))
+	}
+	return values
+}
+
+func validateBoxes(boxes []structs.Box) error {
 	var messages []string
 	for index, box := range boxes {
 		if len(strings.TrimSpace(box.Type)) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Type is missing", index))
 		}
+
 		if len(box.Applications) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Applications are missing", index))
 		}
@@ -51,22 +68,20 @@ func validateBoxes(boxes []structs.Box, runDirectory string) error {
 		if len(strings.TrimSpace(box.Chart)) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Chart is missing", index))
 		}
-		chartFilePath := strings.Join([]string{runDirectory, box.Chart}, "")
-		_, err := os.Stat(chartFilePath)
+		_, err := os.Stat(box.Chart)
 		if err != nil {
-			messages = append(messages, fmt.Sprintf("-> Box %d: Chart file can't be opened (%s)", index, chartFilePath))
+			messages = append(messages, fmt.Sprintf("-> Box %d: Chart file can't be opened (%s)", index, box.Chart))
 		}
 
 		if len(strings.TrimSpace(box.Values)) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Values are missing", index))
 		}
-		valuesFilePath := strings.Join([]string{runDirectory, box.Values}, "")
-		_, err = os.Stat(valuesFilePath)
+		_, err = os.Stat(box.Values)
 		if err != nil {
-			messages = append(messages, fmt.Sprintf("-> Box %d: Values file can't be opened (%s)", index, valuesFilePath))
+			messages = append(messages, fmt.Sprintf("-> Box %d: Values file can't be opened (%s)", index, box.Values))
 		}
 
-		applicationsErrors := validateApplications(box.Applications, runDirectory)
+		applicationsErrors := validateApplications(box.Applications)
 		if len(applicationsErrors) > 0 {
 			for _, err := range applicationsErrors {
 				messages = append(messages, fmt.Sprintf("-> Box %d: \n\r%s", index, err))
@@ -79,7 +94,7 @@ func validateBoxes(boxes []structs.Box, runDirectory string) error {
 	return nil
 }
 
-func InstallBox(box *structs.Box, environmentId string) (*release.Release, error) {
+func InstallBox(box *structs.Box, environment structs.Environment) (*release.Release, error) {
 	config := GetActionConfig(box.Namespace)
 	client := action.NewInstall(config)
 	client.UseReleaseName = true
@@ -91,15 +106,15 @@ func InstallBox(box *structs.Box, environmentId string) (*release.Release, error
 	if err != nil {
 		return nil, err
 	}
-	r, err := client.RunWithContext(context.Background(), chart, chart.Values)
+	r, err := client.RunWithContext(context.Background(), chart, processEnvValues(chart.Values, environment.Variables))
 	if err != nil {
 		return r, err
 	}
-	utils.SaveBox(*box, environmentId)
+	utils.SaveBox(*box, environment.Id)
 	return r, nil
 }
 
-func UpgradeBox(box *structs.Box, environmentId string) (*release.Release, error) {
+func UpgradeBox(box *structs.Box, environment structs.Environment) (*release.Release, error) {
 	config := GetActionConfig(box.Namespace)
 	client := action.NewUpgrade(config)
 	client.Namespace = box.Namespace
@@ -109,22 +124,23 @@ func UpgradeBox(box *structs.Box, environmentId string) (*release.Release, error
 	if err != nil {
 		return nil, err
 	}
-	r, err := client.RunWithContext(context.Background(), box.Name, chart, chart.Values)
+
+	r, err := client.RunWithContext(context.Background(), box.Name, chart, processEnvValues(chart.Values, environment.Variables))
 	if err != nil {
 		return r, err
 	}
-	utils.SaveBox(*box, environmentId)
+	utils.SaveBox(*box, environment.Id)
 	return r, nil
 }
 
-func UninstallBox(box *structs.Box, environmentId string) (*release.UninstallReleaseResponse, error) {
+func UninstallBox(box *structs.Box, environment structs.Environment) (*release.UninstallReleaseResponse, error) {
 	config := GetActionConfig(box.Namespace)
 	client := action.NewUninstall(config)
 	r, err := client.Run(box.Name)
 	if err != nil {
 		return r, err
 	}
-	err = utils.RemoveBox(*box, environmentId)
+	err = utils.RemoveBox(*box, environment.Id)
 	if err != nil {
 		return r, err
 	}
@@ -137,4 +153,19 @@ func GetBox(box *structs.Box) (*release.Release, error) {
 
 	r, err := client.Run(box.Name)
 	return r, err
+}
+
+func expandBoxVariables(boxes []structs.Box) []structs.Box {
+	var newBoxes []structs.Box
+
+	for _, b := range boxes {
+		b.Name = os.ExpandEnv(b.Name)
+		b.Namespace = os.ExpandEnv(b.Namespace)
+		b.Type = os.ExpandEnv(b.Type)
+		b.Chart = os.ExpandEnv(b.Chart)
+		b.Values = os.ExpandEnv(b.Values)
+		b.Applications = ExpandApplications(b.Applications)
+		newBoxes = append(newBoxes, b)
+	}
+	return newBoxes
 }
