@@ -14,9 +14,9 @@ func RunEnvironment(tomlFile string) error {
 	environment := lookForEnvironmentStep(tomlFile)
 	expandEnvironmentVariablesStep(&environment)
 	expandBoxVariablesStep(&environment)
-	isSaved := checkIfEnvironmentIsSavedStep(environment)
 	validateEnvironmentStep(&environment)
 	validateBoxesStep(&environment)
+	isSaved := checkIfEnvironmentIsSavedStep(environment)
 	if isSaved {
 		checkIfEnvironmentHasSameBoxesStep(&environment)
 	}

@@ -1,12 +1,12 @@
 package structs
 
 type Environment struct {
-	Name          string
-	Id            string
-	Namespace     string
-	Boxes         []Box
-	TempDirectory string
-	Variables     string
+	Name          string `toml:"name"`
+	Id            string `toml:"id"`
+	Namespace     string `toml:"namespace"`
+	Boxes         []Box  `toml:"boxes"`
+	TempDirectory string `toml:"-"`
+	Variables     string `toml:"variables"`
 }
 
 type EnvironmentService struct {
