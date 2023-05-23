@@ -1,2 +1,3 @@
 Environment: dev
 domain: 12e.fun
+serviceName: "${FIRST_SERVICE_NAME}"

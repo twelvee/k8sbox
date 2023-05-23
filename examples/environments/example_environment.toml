@@ -1,6 +1,7 @@
 id = "test-env-1" # It could be your ${CI_SLUG} for example
 name = "test environment"
 namespace = "test"
+variables = ".env"
 
 [[boxes]]
 type = "helm"

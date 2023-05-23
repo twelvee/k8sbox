@@ -46,7 +46,7 @@ func deployEnvironment(environment *structs.Environment, isSaved bool) error {
 	}
 
 	for _, box := range environment.Boxes {
-		_, err := InstallBox(&box, environment.Id)
+		_, err := InstallBox(&box, *environment)
 		if err != nil {
 			return err
 		}
@@ -78,10 +78,21 @@ func createTempDeployDirectory(environment *structs.Environment, runDirectory st
 	if err != nil {
 		return "", err
 	}
+
 	return tempFolder, nil
 }
 
 func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDirectory string) error {
+	envVariablesContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Variables}, ""))
+	if err != nil {
+		return err
+	}
+
+	environment.Variables = strings.Join([]string{environment.TempDirectory, ".env"}, "/")
+	err = ioutil.WriteFile(environment.Variables, envVariablesContent, 0644)
+	if err != nil {
+		return err
+	}
 	for bi, box := range environment.Boxes {
 		saved, err := utils.IsBoxSaved(environment.Id, box)
 		if err != nil {
@@ -90,6 +101,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 		if saved {
 			return nil
 		}
+
 		environment.Boxes[bi].TempDirectory = strings.Join([]string{environment.TempDirectory, utils.GetShortID(8)}, "/")
 		os.Mkdir(environment.Boxes[bi].TempDirectory, 0750)
 		boxChartContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Chart}, ""))
@@ -130,7 +142,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 	return nil
 }
 
-func validateEnvironment(environment *structs.Environment) error {
+func validateEnvironment(environment *structs.Environment, runDirectory string) error {
 	var messages []string
 	if len(strings.TrimSpace(environment.Id)) == 0 {
 		messages = append(messages, "Environment id is missing")
@@ -138,6 +150,14 @@ func validateEnvironment(environment *structs.Environment) error {
 
 	if len(strings.TrimSpace(environment.Name)) == 0 {
 		messages = append(messages, "Environment name is missing")
+	}
+
+	if len(strings.TrimSpace(environment.Variables)) > 0 {
+		envFilePath := strings.Join([]string{runDirectory, environment.Variables}, "")
+		_, err := os.Stat(envFilePath)
+		if err != nil {
+			messages = append(messages, fmt.Sprintf("Environment variables specified but file missing (%s)", envFilePath))
+		}
 	}
 
 	if len(environment.Boxes) == 0 {

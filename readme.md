@@ -14,7 +14,7 @@ https://hub.docker.com/r/twelvee/k8sbox/tags
 3. List of all environments k8sbox deployed
 
 ### What k8sbox will do in a future
-1. Parse your $ENV variables into your applications
+1. Parse your $ENV variables into your applications (v1.1 - done)
 2. Connect your boxes with pre-templated ingress
 3. Look for your boxes in run-time
 4. Create an applications from git (also from private git)

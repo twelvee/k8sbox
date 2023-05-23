@@ -13,7 +13,7 @@ import (
 func RunEnvironment(tomlFile string) error {
 	environment, runDirectory := lookForEnvironmentStep(tomlFile)
 	isSaved := checkIfEnvironmentIsSavedStep(environment)
-	validateEnvironmentStep(environment)
+	validateEnvironmentStep(environment, runDirectory)
 	validateBoxesStep(&environment, runDirectory)
 	if isSaved {
 		checkIfEnvironmentHasSameBoxesStep(&environment)
@@ -77,21 +77,22 @@ func checkIfEnvironmentHasSameBoxesStep(environment *structs.Environment) {
 	fmt.Println(" OK")
 	if len(savedEnvironment.Boxes) > 0 {
 		fmt.Printf("Found %d legacy boxes. Removing...", len(savedEnvironment.Boxes))
-	}
-	for _, savedBox := range savedEnvironment.Boxes {
-		_, err := k8sbox.GetBoxService().UninstallBox(&savedBox, environment.Id)
-		if err != nil {
-			fmt.Println(" FAIL :(")
-			fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
-			os.Exit(1)
+		os.Remove(environment.Variables)
+		for _, savedBox := range savedEnvironment.Boxes {
+			_, err := k8sbox.GetBoxService().UninstallBox(&savedBox, *environment)
+			if err != nil {
+				fmt.Println(" FAIL :(")
+				fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+				os.Exit(1)
+			}
 		}
+		fmt.Println(" OK")
 	}
-	fmt.Println(" OK")
 }
 
-func validateEnvironmentStep(environment structs.Environment) {
+func validateEnvironmentStep(environment structs.Environment, runDirectory string) {
 	fmt.Print("Validating environment...")
-	err := k8sbox.GetEnvironmentService().ValidateEnvironment(&environment)
+	err := k8sbox.GetEnvironmentService().ValidateEnvironment(&environment, runDirectory)
 	if err != nil {
 		fmt.Println(" FAIL :(")
 		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
