@@ -5,8 +5,8 @@ GOOS?=$(shell go env GOOS || echo linux)
 GOARCH?=$(shell go env GOARCH || echo amd64)
 CGO_ENABLED?=0
 
-DOCKER_IMAGE?=${APP_NAME}
-DOCKER_TAG?=current
+DOCKER_IMAGE?=twelvee/${APP_NAME}
+DOCKER_TAG?=v1.1-dev
 
 ifeq (, $(shell which docker))
 $(error "Binary docker not found in $(PATH)")
