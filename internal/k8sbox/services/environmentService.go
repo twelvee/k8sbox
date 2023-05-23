@@ -31,11 +31,13 @@ func GetActionConfig(namespace string) *action.Configuration {
 	return actionConfig
 }
 
-func deployEnvironment(environment *structs.Environment) error {
-	for _, box := range environment.Boxes {
-		UninstallBox(&box)
+func deployEnvironment(environment *structs.Environment, isSaved bool) error {
+	if !isSaved {
+		utils.SaveEnvironment(*environment)
+	}
 
-		_, err := InstallBox(&box)
+	for _, box := range environment.Boxes {
+		_, err := InstallBox(&box, environment.Id)
 		if err != nil {
 			return err
 		}
@@ -45,8 +47,20 @@ func deployEnvironment(environment *structs.Environment) error {
 	return nil
 }
 
-func createTempDeployDirectory(environment *structs.Environment, runDirectory string, shortID string) (string, error) {
-	tempFolder, err := utils.CreateTempFolder(shortID)
+func createTempDeployDirectory(environment *structs.Environment, runDirectory string, isSavedAlready bool) (string, error) {
+	if isSavedAlready {
+		env, err := utils.GetEnvironment(environment.Id)
+		if err != nil {
+			return "", err
+		}
+		environment.TempDirectory = env.TempDirectory
+		err = moveEnvironmentFilesToTempDirectory(environment, runDirectory)
+		if err != nil {
+			return "", err
+		}
+		return env.TempDirectory, nil
+	}
+	tempFolder, err := utils.CreateTempFolder(utils.GetShortID(8))
 	if err != nil {
 		return "", err
 	}
@@ -59,7 +73,14 @@ func createTempDeployDirectory(environment *structs.Environment, runDirectory st
 }
 
 func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDirectory string) error {
-	for bi, _ := range environment.Boxes {
+	for bi, box := range environment.Boxes {
+		saved, err := utils.IsBoxSaved(environment.Id, box)
+		if err != nil {
+			return err
+		}
+		if saved {
+			return nil
+		}
 		environment.Boxes[bi].TempDirectory = strings.Join([]string{environment.TempDirectory, utils.GetShortID(8)}, "/")
 		os.Mkdir(environment.Boxes[bi].TempDirectory, 0750)
 		boxChartContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Chart}, ""))
@@ -102,6 +123,10 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 
 func validateEnvironment(environment *structs.Environment) error {
 	var messages []string
+	if len(strings.TrimSpace(environment.Id)) == 0 {
+		messages = append(messages, "Environment id is missing")
+	}
+
 	if len(strings.TrimSpace(environment.Name)) == 0 {
 		messages = append(messages, "Environment name is missing")
 	}

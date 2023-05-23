@@ -1,7 +1,8 @@
 package structs
 
+import "helm.sh/helm/v3/pkg/release"
+
 type Box struct {
-	Tag           string
 	Type          string
 	Applications  []Application
 	Chart         string
@@ -12,7 +13,9 @@ type Box struct {
 }
 
 type BoxService struct {
-	ValidateBoxes func([]Box, string, ApplicationService) error
+	ValidateBoxes   func([]Box, string) error
+	FillEmptyFields func(*Box, string) error
+	UninstallBox    func(*Box, string) (*release.UninstallReleaseResponse, error)
 }
 
 func Helm() string {

@@ -2,7 +2,6 @@ package structs
 
 type Application struct {
 	Name          string
-	Tag           string
 	Chart         string
 	TempDirectory string
 }
