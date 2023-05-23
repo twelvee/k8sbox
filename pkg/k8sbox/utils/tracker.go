@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/google/go-cmp/cmp"
@@ -186,7 +185,6 @@ func SaveBox(box structs.Box, environmentId string) error {
 	err = json.Unmarshal(content, &targets)
 	for i, env := range targets {
 		if env.Id == environmentId {
-			fmt.Println("Save the box...")
 			targets[i].Boxes = append(env.Boxes, box)
 		}
 	}
@@ -225,14 +223,12 @@ func RemoveBox(box structs.Box, environmentId string) error {
 		if env.Id == environmentId {
 			for i, savedBox := range env.Boxes {
 				if cmp.Equal(box, savedBox) {
-					fmt.Println("Removing box.. ")
 					targets[t].Boxes[i] = targets[t].Boxes[len(env.Boxes)-1]
 					targets[t].Boxes = targets[t].Boxes[:len(env.Boxes)-1]
-					err := os.Remove(box.TempDirectory)
+					err := os.RemoveAll(box.TempDirectory)
 					if err != nil {
 						return err
 					}
-					fmt.Println("box removed")
 					break
 				}
 			}

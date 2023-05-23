@@ -123,7 +123,10 @@ func UninstallBox(box *structs.Box, environmentId string) (*release.UninstallRel
 	if err != nil {
 		return r, err
 	}
-	utils.RemoveBox(*box, environmentId)
+	err = utils.RemoveBox(*box, environmentId)
+	if err != nil {
+		return r, err
+	}
 	return r, nil
 }
 
