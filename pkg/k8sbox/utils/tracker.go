@@ -134,6 +134,24 @@ func GetEnvironment(id string) (*structs.Environment, error) {
 	return nil, nil
 }
 
+func GetEnvironments() ([]structs.Environment, error) {
+	err := ensureSaveFileAvailable()
+	if err != nil {
+		return nil, err
+	}
+	content, err := os.ReadFile(savesFile)
+	if err != nil {
+		return nil, err
+	}
+	targets := []structs.Environment{}
+	err = json.Unmarshal(content, &targets)
+	if err != nil {
+		return nil, err
+	}
+
+	return targets, nil
+}
+
 func GetBox(environmentId string, boxName string, boxNamespace string, boxTempDirectory string) (*structs.Box, error) {
 	err := ensureSaveFileAvailable()
 	if err != nil {
