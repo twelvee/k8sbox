@@ -16,9 +16,18 @@ import (
 func NewEnvironmentService() structs.EnvironmentService {
 	return structs.EnvironmentService{
 		DeployEnvironment:         deployEnvironment,
+		DeleteEnvironment:         deleteEnvironment,
 		CreateTempDeployDirectory: createTempDeployDirectory,
 		ValidateEnvironment:       validateEnvironment,
 	}
+}
+
+func deleteEnvironment(environment *structs.Environment) error {
+	err := utils.RemoveEnvironment(environment.Id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetActionConfig(namespace string) *action.Configuration {

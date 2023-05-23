@@ -284,6 +284,10 @@ func RemoveEnvironment(id string) error {
 		if env.Id == id {
 			targets[i] = targets[len(targets)-1]
 			targets = targets[:len(targets)-1]
+			err = os.RemoveAll(env.TempDirectory)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	content, err = json.Marshal(targets)

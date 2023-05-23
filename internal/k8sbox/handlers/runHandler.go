@@ -10,6 +10,6 @@ import (
 func HandleRunCommand(tomlFile string, context context.Context) {
 	err := model.RunEnvironment(tomlFile)
 	if err != nil {
-		panic(fmt.Sprintf("failed to run environment. %#v", err))
+		fmt.Println("\n\rFailed to run environment. ", err)
 	}
 }

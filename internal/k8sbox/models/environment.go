@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -19,6 +20,19 @@ func RunEnvironment(tomlFile string) error {
 	}
 	createTempDeployDirectoryStep(&environment, runDirectory, isSaved)
 	deployEnvironmentStep(&environment, isSaved)
+
+	fmt.Println("Aight we're done here!")
+	return nil
+}
+
+func DeleteEnvironment(tomlFile string) error {
+	environment, _ := lookForEnvironmentStep(tomlFile)
+	isSaved := checkIfEnvironmentIsSavedStep(environment)
+	if !isSaved {
+		return errors.New("Saved environment not found")
+	}
+	checkIfEnvironmentHasSameBoxesStep(&environment)
+	deleteEnvironmentStep(&environment)
 
 	fmt.Println("Aight we're done here!")
 	return nil
@@ -121,6 +135,17 @@ func createTempDeployDirectoryStep(environment *structs.Environment, runDirector
 func deployEnvironmentStep(environment *structs.Environment, isSaved bool) {
 	fmt.Print("Deploying...")
 	err := k8sbox.GetEnvironmentService().DeployEnvironment(environment, isSaved)
+	if err != nil {
+		fmt.Println(" FAIL :(")
+		fmt.Fprintf(os.Stderr, "Reasons: \n\r%s\n\r", err)
+		os.Exit(1)
+	}
+	fmt.Println(" OK")
+}
+
+func deleteEnvironmentStep(environment *structs.Environment) {
+	fmt.Print("Deleting environment...")
+	err := k8sbox.GetEnvironmentService().DeleteEnvironment(environment)
 	if err != nil {
 		fmt.Println(" FAIL :(")
 		fmt.Fprintf(os.Stderr, "Reasons: \n\r%s\n\r", err)
