@@ -14,7 +14,7 @@ type Box struct {
 
 type BoxService struct {
 	ProcessEnvValues   func(map[string]interface{}, string) map[string]interface{}
-	ValidateBoxes      func([]Box, string) error
+	ValidateBoxes      func([]Box) error
 	FillEmptyFields    func(*Box, string) error
 	UninstallBox       func(*Box, Environment) (*release.UninstallReleaseResponse, error)
 	GetBox             func(*Box) (*release.Release, error)

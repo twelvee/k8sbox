@@ -11,16 +11,16 @@ import (
 )
 
 func RunEnvironment(tomlFile string) error {
-	environment, runDirectory := lookForEnvironmentStep(tomlFile)
+	environment := lookForEnvironmentStep(tomlFile)
 	expandEnvironmentVariablesStep(&environment)
 	expandBoxVariablesStep(&environment)
 	isSaved := checkIfEnvironmentIsSavedStep(environment)
-	validateEnvironmentStep(&environment, runDirectory)
-	validateBoxesStep(&environment, runDirectory)
+	validateEnvironmentStep(&environment)
+	validateBoxesStep(&environment)
 	if isSaved {
 		checkIfEnvironmentHasSameBoxesStep(&environment)
 	}
-	createTempDeployDirectoryStep(&environment, runDirectory, isSaved)
+	createTempDeployDirectoryStep(&environment, isSaved)
 	deployEnvironmentStep(&environment, isSaved)
 
 	fmt.Println("Aight we're done here!")
@@ -28,7 +28,7 @@ func RunEnvironment(tomlFile string) error {
 }
 
 func DeleteEnvironment(tomlFile string) error {
-	environment, _ := lookForEnvironmentStep(tomlFile)
+	environment := lookForEnvironmentStep(tomlFile)
 	expandEnvironmentVariablesStep(&environment)
 	expandBoxVariablesStep(&environment)
 	isSaved := checkIfEnvironmentIsSavedStep(environment)
@@ -42,16 +42,16 @@ func DeleteEnvironment(tomlFile string) error {
 	return nil
 }
 
-func lookForEnvironmentStep(tomlFile string) (structs.Environment, string) {
+func lookForEnvironmentStep(tomlFile string) structs.Environment {
 	fmt.Print("Looking for environment...")
-	environment, runDirectory, err := k8sbox.GetTomlFormatter().GetEnvironmentFromToml(tomlFile)
+	environment, err := k8sbox.GetTomlFormatter().GetEnvironmentFromToml(tomlFile)
 	if err != nil {
 		fmt.Println(" FAIL :(")
 		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
 		os.Exit(1)
 	}
 	fmt.Println(" OK")
-	return environment, runDirectory
+	return environment
 }
 
 func expandEnvironmentVariablesStep(environment *structs.Environment) {
@@ -106,9 +106,9 @@ func checkIfEnvironmentHasSameBoxesStep(environment *structs.Environment) {
 	}
 }
 
-func validateEnvironmentStep(environment *structs.Environment, runDirectory string) {
+func validateEnvironmentStep(environment *structs.Environment) {
 	fmt.Print("Validating environment...")
-	err := k8sbox.GetEnvironmentService().ValidateEnvironment(environment, runDirectory)
+	err := k8sbox.GetEnvironmentService().ValidateEnvironment(environment)
 	if err != nil {
 		fmt.Println(" FAIL :(")
 		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
@@ -117,9 +117,9 @@ func validateEnvironmentStep(environment *structs.Environment, runDirectory stri
 	fmt.Println(" OK")
 }
 
-func validateBoxesStep(environment *structs.Environment, runDirectory string) {
+func validateBoxesStep(environment *structs.Environment) {
 	fmt.Print("Validating boxes...")
-	err := k8sbox.GetBoxService().ValidateBoxes(environment.Boxes, runDirectory)
+	err := k8sbox.GetBoxService().ValidateBoxes(environment.Boxes)
 	if err != nil {
 		fmt.Println(" FAIL :(")
 		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
@@ -137,10 +137,10 @@ func validateBoxesStep(environment *structs.Environment, runDirectory string) {
 	fmt.Println(" OK")
 }
 
-func createTempDeployDirectoryStep(environment *structs.Environment, runDirectory string, isSaved bool) {
+func createTempDeployDirectoryStep(environment *structs.Environment, isSaved bool) {
 	fmt.Print("Moving files to a temporary directory...")
 	var err error
-	environment.TempDirectory, err = k8sbox.GetEnvironmentService().CreateTempDeployDirectory(environment, runDirectory, isSaved)
+	environment.TempDirectory, err = k8sbox.GetEnvironmentService().CreateTempDeployDirectory(environment, isSaved)
 	if err != nil {
 		fmt.Println(" FAIL :(")
 		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)

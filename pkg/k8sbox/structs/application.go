@@ -7,6 +7,6 @@ type Application struct {
 }
 
 type ApplicationService struct {
-	ValidateApplications func([]Application, string) []string
+	ValidateApplications func([]Application) []string
 	ExpandApplications   func([]Application) []Application
 }

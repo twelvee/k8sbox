@@ -54,7 +54,7 @@ func processEnvValues(values map[string]interface{}, dotenvPath string) map[stri
 	return values
 }
 
-func validateBoxes(boxes []structs.Box, runDirectory string) error {
+func validateBoxes(boxes []structs.Box) error {
 	var messages []string
 	for index, box := range boxes {
 		if len(strings.TrimSpace(box.Type)) == 0 {
@@ -68,22 +68,20 @@ func validateBoxes(boxes []structs.Box, runDirectory string) error {
 		if len(strings.TrimSpace(box.Chart)) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Chart is missing", index))
 		}
-		chartFilePath := strings.Join([]string{runDirectory, box.Chart}, "")
-		_, err := os.Stat(chartFilePath)
+		_, err := os.Stat(box.Chart)
 		if err != nil {
-			messages = append(messages, fmt.Sprintf("-> Box %d: Chart file can't be opened (%s)", index, chartFilePath))
+			messages = append(messages, fmt.Sprintf("-> Box %d: Chart file can't be opened (%s)", index, box.Chart))
 		}
 
 		if len(strings.TrimSpace(box.Values)) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Values are missing", index))
 		}
-		valuesFilePath := strings.Join([]string{runDirectory, box.Values}, "")
-		_, err = os.Stat(valuesFilePath)
+		_, err = os.Stat(box.Values)
 		if err != nil {
-			messages = append(messages, fmt.Sprintf("-> Box %d: Values file can't be opened (%s)", index, valuesFilePath))
+			messages = append(messages, fmt.Sprintf("-> Box %d: Values file can't be opened (%s)", index, box.Values))
 		}
 
-		applicationsErrors := validateApplications(box.Applications, runDirectory)
+		applicationsErrors := validateApplications(box.Applications)
 		if len(applicationsErrors) > 0 {
 			for _, err := range applicationsErrors {
 				messages = append(messages, fmt.Sprintf("-> Box %d: \n\r%s", index, err))

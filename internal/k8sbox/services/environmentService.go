@@ -64,14 +64,14 @@ func deployEnvironment(environment *structs.Environment, isSaved bool) error {
 	return nil
 }
 
-func createTempDeployDirectory(environment *structs.Environment, runDirectory string, isSavedAlready bool) (string, error) {
+func createTempDeployDirectory(environment *structs.Environment, isSavedAlready bool) (string, error) {
 	if isSavedAlready {
 		env, err := utils.GetEnvironment(environment.Id)
 		if err != nil {
 			return "", err
 		}
 		environment.TempDirectory = env.TempDirectory
-		err = moveEnvironmentFilesToTempDirectory(environment, runDirectory)
+		err = moveEnvironmentFilesToTempDirectory(environment)
 		if err != nil {
 			return "", err
 		}
@@ -82,7 +82,7 @@ func createTempDeployDirectory(environment *structs.Environment, runDirectory st
 		return "", err
 	}
 	environment.TempDirectory = tempFolder
-	err = moveEnvironmentFilesToTempDirectory(environment, runDirectory)
+	err = moveEnvironmentFilesToTempDirectory(environment)
 	if err != nil {
 		return "", err
 	}
@@ -90,8 +90,8 @@ func createTempDeployDirectory(environment *structs.Environment, runDirectory st
 	return tempFolder, nil
 }
 
-func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDirectory string) error {
-	envVariablesContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Variables}, ""))
+func moveEnvironmentFilesToTempDirectory(environment *structs.Environment) error {
+	envVariablesContent, err := ioutil.ReadFile(environment.Variables)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 
 		environment.Boxes[bi].TempDirectory = strings.Join([]string{environment.TempDirectory, utils.GetShortID(8)}, "/")
 		os.Mkdir(environment.Boxes[bi].TempDirectory, 0750)
-		boxChartContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Chart}, ""))
+		boxChartContent, err := ioutil.ReadFile(environment.Boxes[bi].Chart)
 		if err != nil {
 			return err
 		}
@@ -122,7 +122,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 			return err
 		}
 
-		boxValuesContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Values}, ""))
+		boxValuesContent, err := ioutil.ReadFile(environment.Boxes[bi].Values)
 		if err != nil {
 			return err
 		}
@@ -136,7 +136,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 			environment.Boxes[bi].Applications[ai].TempDirectory = strings.Join([]string{environment.Boxes[bi].TempDirectory, "templates"}, "/")
 			os.Mkdir(environment.Boxes[bi].Applications[ai].TempDirectory, 0750)
 
-			applicationContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Applications[ai].Chart}, ""))
+			applicationContent, err := ioutil.ReadFile(environment.Boxes[bi].Applications[ai].Chart)
 			if err != nil {
 				return err
 			}
@@ -150,7 +150,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 	return nil
 }
 
-func validateEnvironment(environment *structs.Environment, runDirectory string) error {
+func validateEnvironment(environment *structs.Environment) error {
 	var messages []string
 	if len(strings.TrimSpace(environment.Id)) == 0 {
 		messages = append(messages, "Environment id is missing")
@@ -161,10 +161,9 @@ func validateEnvironment(environment *structs.Environment, runDirectory string) 
 	}
 
 	if len(strings.TrimSpace(environment.Variables)) > 0 {
-		envFilePath := strings.Join([]string{runDirectory, environment.Variables}, "")
-		_, err := os.Stat(envFilePath)
+		_, err := os.Stat(environment.Variables)
 		if err != nil {
-			messages = append(messages, fmt.Sprintf("Environment variables specified but file missing (%s)", envFilePath))
+			messages = append(messages, fmt.Sprintf("Environment variables specified but file missing (%s)", environment.Variables))
 		}
 	}
 
