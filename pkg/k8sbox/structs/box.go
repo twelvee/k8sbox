@@ -16,6 +16,7 @@ type BoxService struct {
 	ValidateBoxes   func([]Box, string) error
 	FillEmptyFields func(*Box, string) error
 	UninstallBox    func(*Box, string) (*release.UninstallReleaseResponse, error)
+	GetBox          func(*Box) (*release.Release, error)
 }
 
 func Helm() string {

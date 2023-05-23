@@ -19,6 +19,7 @@ func NewBoxService() structs.BoxService {
 		ValidateBoxes:   validateBoxes,
 		FillEmptyFields: fillEmptyFields,
 		UninstallBox:    UninstallBox,
+		GetBox:          GetBox,
 	}
 }
 
@@ -130,6 +131,10 @@ func UninstallBox(box *structs.Box, environmentId string) (*release.UninstallRel
 	return r, nil
 }
 
-func GetBox(box structs.Box) (*release.Release, error) {
-	return nil, nil
+func GetBox(box *structs.Box) (*release.Release, error) {
+	config := GetActionConfig(box.Namespace)
+	client := action.NewGet(config)
+
+	r, err := client.Run(box.Name)
+	return r, err
 }
