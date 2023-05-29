@@ -1,4 +1,7 @@
 # k8sbox
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f4b40e690aaf4a06a12e7800c58cbe49)](https://app.codacy.com/gh/twelvee/k8sbox?utm_source=github.com&utm_medium=referral&utm_content=twelvee/k8sbox&utm_campaign=Badge_Grade)
+
 **Helpful tool to replicate your k8s environments** <br>
 <img src="https://images2.imgbox.com/db/44/P0ALO0l4_o.gif"><br>
 
