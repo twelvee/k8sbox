@@ -1,3 +1,4 @@
+// Package utils is a useful utils that k8sbox use. Methods are usually exported
 package utils
 
 import (
@@ -5,6 +6,7 @@ import (
 	"strings"
 )
 
+// CreateTempFolder creates a temp directory for an environment
 func CreateTempFolder(name string) (string, error) {
 	name, err := ioutil.TempDir("/tmp", strings.Join([]string{"k8srun", name}, ""))
 	if err != nil {

@@ -1,3 +1,4 @@
+// Package commands is an entrypoint for every single cobra command available
 package commands
 
 import (
@@ -5,6 +6,7 @@ import (
 	"github.com/twelvee/k8sbox/internal/k8sbox/handlers"
 )
 
+// NewRunCommand is run command entrypoint
 func NewRunCommand() *cobra.Command {
 	var (
 		command  *cobra.Command
@@ -14,7 +16,7 @@ func NewRunCommand() *cobra.Command {
 		Use:   "run",
 		Short: "Run templated environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleRunCommand(tomlFile, command.Context())
+			handlers.HandleRunCommand(command.Context(), tomlFile)
 			return nil
 		},
 	}

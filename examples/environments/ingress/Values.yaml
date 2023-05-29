@@ -1,2 +1,6 @@
 Environment: dev
-domain: "test"
+domain: "12e.fun"
+firstServiceDomainPrefix: "${FIRST_SERVICE_DOMAIN_PREFIX}"
+secondServiceDomainPrefix: "${SECOND_SERVICE_DOMAIN_PREFIX}"
+firstServiceName: "${FIRST_SERVICE_NAME}"
+secondServiceName: "${SECOND_SERVICE_NAME}"

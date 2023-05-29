@@ -4,20 +4,20 @@ metadata:
   name: www-ingress
 spec:
   rules:
-    - host: "12e.fun"
+    - host: {{ .Values.domain }}
       http:
         paths:
-          - path: /{{ .Values.domain }}
+          - path: /{{ .Values.firstServiceDomainPrefix }}
             pathType: Prefix
             backend:
               service:
-                name: "{{ .Values.Environment }}-{{ .Release.Name }}"
+                name: "{{ .Values.firstServiceName }}"
                 port:
                   number: 80
-          - path: /new-{{ .Values.domain }}
+          - path: /{{ .Values.secondServiceDomainPrefix }}
             pathType: Prefix
             backend:
               service:
-                name: "{{ .Values.Environment }}-{{ .Release.Name }}-new"
+                name: "{{ .Values.secondServiceName }}"
                 port:
                   number: 80

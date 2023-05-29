@@ -1,38 +1,39 @@
+// Package formatters should contain toml/yaml formatters
 package formatters
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 )
 
+// TomlFormatter is an environment toml formatter
 type TomlFormatter struct {
-	GetEnvironmentFromToml func(string) (structs.Environment, string, error)
+	GetEnvironmentFromToml func(string) (structs.Environment, error)
 }
 
+// NewTomlFormatter creates a new Tomlformatter struct
 func NewTomlFormatter() TomlFormatter {
 	return TomlFormatter{
 		GetEnvironmentFromToml: getEnvironmentFromToml,
 	}
 }
 
-func getEnvironmentFromToml(tomlFile string) (structs.Environment, string, error) {
+func getEnvironmentFromToml(tomlFile string) (structs.Environment, error) {
 	var environment structs.Environment
 
-	info, err := os.Stat(tomlFile)
+	_, err := os.Stat(tomlFile)
 	if err != nil {
-		return structs.Environment{}, "", errors.New(fmt.Sprintf("File %s not found", tomlFile))
+		return structs.Environment{}, fmt.Errorf("File %s not found", tomlFile)
 	}
-	boxesPath := strings.ReplaceAll(tomlFile, info.Name(), "")
+
 	data, err := os.ReadFile(tomlFile)
 
 	err = toml.Unmarshal(data, &environment)
 	if err != nil {
 		panic(err)
 	}
-	return environment, boxesPath, nil
+	return environment, nil
 }

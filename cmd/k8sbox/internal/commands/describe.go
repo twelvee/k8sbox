@@ -6,18 +6,17 @@ import (
 	"github.com/twelvee/k8sbox/internal/k8sbox/handlers"
 )
 
-// NewGetCommand is get command entrypoint
-func NewGetCommand() *cobra.Command {
+// NewDescribeCommand is describe command entrypoint
+func NewDescribeCommand() *cobra.Command {
 	var (
 		command *cobra.Command
-		flags   []string
 	)
 	command = &cobra.Command{
-		Use:   "get",
-		Short: "Get saved environments",
-		Args:  cobra.MinimumNArgs(1),
+		Use:   "describe",
+		Short: "Get detailed information about saved environment",
+		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleGetCommand(command.Context(), args[0], flags)
+			handlers.HandleDescribeCommand(command.Context(), args[0], args[1])
 			return nil
 		},
 	}

@@ -1,3 +1,4 @@
+// Package services contains buisness-logic methods of the models
 package services
 
 import (
@@ -13,25 +14,35 @@ import (
 	"helm.sh/helm/v3/pkg/kube"
 )
 
+// NewEnvironmentService creates a new EnvironmentService
 func NewEnvironmentService() structs.EnvironmentService {
 	return structs.EnvironmentService{
 		DeployEnvironment:         deployEnvironment,
 		DeleteEnvironment:         deleteEnvironment,
 		CreateTempDeployDirectory: createTempDeployDirectory,
 		ValidateEnvironment:       validateEnvironment,
+		ExpandVariables:           expandVariables,
 	}
 }
 
+func expandVariables(environment *structs.Environment) {
+	environment.Name = os.ExpandEnv(environment.Name)
+	environment.ID = os.ExpandEnv(environment.ID)
+	environment.Namespace = os.ExpandEnv(environment.Namespace)
+	environment.Variables = os.ExpandEnv(environment.Variables)
+}
+
 func deleteEnvironment(environment *structs.Environment) error {
-	err := utils.RemoveEnvironment(environment.Id)
+	err := utils.RemoveEnvironment(environment.ID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+// GetActionConfig is loading your Kubeconfig into configuration struct
 func GetActionConfig(namespace string) *action.Configuration {
-	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "minikube", namespace)
+	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "", namespace)
 	actionConfig := new(action.Configuration)
 	actionConfig.Init(restClientGetter, namespace, "secret", func(format string, v ...interface{}) {
 		fmt.Sprintf(format, v)
@@ -46,24 +57,23 @@ func deployEnvironment(environment *structs.Environment, isSaved bool) error {
 	}
 
 	for _, box := range environment.Boxes {
-		_, err := InstallBox(&box, environment.Id)
+		_, err := InstallBox(&box, *environment)
 		if err != nil {
 			return err
 		}
 	}
 
-	//return releases, nil
 	return nil
 }
 
-func createTempDeployDirectory(environment *structs.Environment, runDirectory string, isSavedAlready bool) (string, error) {
+func createTempDeployDirectory(environment *structs.Environment, isSavedAlready bool) (string, error) {
 	if isSavedAlready {
-		env, err := utils.GetEnvironment(environment.Id)
+		env, err := utils.GetEnvironment(environment.ID)
 		if err != nil {
 			return "", err
 		}
 		environment.TempDirectory = env.TempDirectory
-		err = moveEnvironmentFilesToTempDirectory(environment, runDirectory)
+		err = moveEnvironmentFilesToTempDirectory(environment)
 		if err != nil {
 			return "", err
 		}
@@ -74,25 +84,37 @@ func createTempDeployDirectory(environment *structs.Environment, runDirectory st
 		return "", err
 	}
 	environment.TempDirectory = tempFolder
-	err = moveEnvironmentFilesToTempDirectory(environment, runDirectory)
+	err = moveEnvironmentFilesToTempDirectory(environment)
 	if err != nil {
 		return "", err
 	}
+
 	return tempFolder, nil
 }
 
-func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDirectory string) error {
+func moveEnvironmentFilesToTempDirectory(environment *structs.Environment) error {
+	envVariablesContent, err := ioutil.ReadFile(environment.Variables)
+	if err != nil {
+		return err
+	}
+
+	environment.Variables = strings.Join([]string{environment.TempDirectory, ".env"}, "/")
+	err = ioutil.WriteFile(environment.Variables, envVariablesContent, 0644)
+	if err != nil {
+		return err
+	}
 	for bi, box := range environment.Boxes {
-		saved, err := utils.IsBoxSaved(environment.Id, box)
+		saved, err := utils.IsBoxSaved(environment.ID, box)
 		if err != nil {
 			return err
 		}
 		if saved {
 			return nil
 		}
+
 		environment.Boxes[bi].TempDirectory = strings.Join([]string{environment.TempDirectory, utils.GetShortID(8)}, "/")
 		os.Mkdir(environment.Boxes[bi].TempDirectory, 0750)
-		boxChartContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Chart}, ""))
+		boxChartContent, err := ioutil.ReadFile(environment.Boxes[bi].Chart)
 		if err != nil {
 			return err
 		}
@@ -102,7 +124,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 			return err
 		}
 
-		boxValuesContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Values}, ""))
+		boxValuesContent, err := ioutil.ReadFile(environment.Boxes[bi].Values)
 		if err != nil {
 			return err
 		}
@@ -112,11 +134,11 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 			return err
 		}
 
-		for ai, _ := range environment.Boxes[bi].Applications {
+		for ai := range environment.Boxes[bi].Applications {
 			environment.Boxes[bi].Applications[ai].TempDirectory = strings.Join([]string{environment.Boxes[bi].TempDirectory, "templates"}, "/")
 			os.Mkdir(environment.Boxes[bi].Applications[ai].TempDirectory, 0750)
 
-			applicationContent, err := ioutil.ReadFile(strings.Join([]string{runDirectory, environment.Boxes[bi].Applications[ai].Chart}, ""))
+			applicationContent, err := ioutil.ReadFile(environment.Boxes[bi].Applications[ai].Chart)
 			if err != nil {
 				return err
 			}
@@ -132,12 +154,19 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment, runDi
 
 func validateEnvironment(environment *structs.Environment) error {
 	var messages []string
-	if len(strings.TrimSpace(environment.Id)) == 0 {
+	if len(strings.TrimSpace(environment.ID)) == 0 {
 		messages = append(messages, "Environment id is missing")
 	}
 
 	if len(strings.TrimSpace(environment.Name)) == 0 {
 		messages = append(messages, "Environment name is missing")
+	}
+
+	if len(strings.TrimSpace(environment.Variables)) > 0 {
+		_, err := os.Stat(environment.Variables)
+		if err != nil {
+			messages = append(messages, fmt.Sprintf("Environment variables specified but file missing (%s)", environment.Variables))
+		}
 	}
 
 	if len(environment.Boxes) == 0 {

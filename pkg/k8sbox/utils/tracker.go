@@ -1,3 +1,4 @@
+// Package utils is a useful utils that k8sbox use. Methods are usually exported
 package utils
 
 import (
@@ -30,7 +31,8 @@ func ensureSaveFileAvailable() error {
 	return nil
 }
 
-func IsBoxSaved(environmentId string, sbox structs.Box) (bool, error) {
+// IsBoxSaved check if the box is already saved or not
+func IsBoxSaved(environmentID string, sbox structs.Box) (bool, error) {
 	err := ensureSaveFileAvailable()
 	if err != nil {
 		return false, err
@@ -46,7 +48,7 @@ func IsBoxSaved(environmentId string, sbox structs.Box) (bool, error) {
 	}
 
 	for _, env := range targets {
-		if env.Id == environmentId {
+		if env.ID == environmentID {
 			for _, box := range env.Boxes {
 				if cmp.Equal(box, sbox) {
 					return true, nil
@@ -58,6 +60,7 @@ func IsBoxSaved(environmentId string, sbox structs.Box) (bool, error) {
 	return false, nil
 }
 
+// IsEnvironmentSaved check if the environment is already saved or not
 func IsEnvironmentSaved(id string) (bool, error) {
 	err := ensureSaveFileAvailable()
 	if err != nil {
@@ -74,20 +77,21 @@ func IsEnvironmentSaved(id string) (bool, error) {
 	}
 
 	for _, env := range targets {
-		if env.Id == id {
+		if env.ID == id {
 			return true, nil
 		}
 	}
 	return false, nil
 }
 
+// SaveEnvironment will save your environment to tmp folder
 func SaveEnvironment(environment structs.Environment) error {
 	err := ensureSaveFileAvailable()
 	if err != nil {
 		return err
 	}
 
-	isSavedAlready, err := IsEnvironmentSaved(environment.Id)
+	isSavedAlready, err := IsEnvironmentSaved(environment.ID)
 	if err != nil {
 		return err
 	}
@@ -111,6 +115,7 @@ func SaveEnvironment(environment structs.Environment) error {
 	return nil
 }
 
+// GetEnvironment will return your environment from tmp folder
 func GetEnvironment(id string) (*structs.Environment, error) {
 	err := ensureSaveFileAvailable()
 	if err != nil {
@@ -127,13 +132,14 @@ func GetEnvironment(id string) (*structs.Environment, error) {
 	}
 
 	for _, env := range targets {
-		if env.Id == id {
+		if env.ID == id {
 			return &env, nil
 		}
 	}
 	return nil, nil
 }
 
+// GetEnvironments will return all your environments from tmp folder
 func GetEnvironments() ([]structs.Environment, error) {
 	err := ensureSaveFileAvailable()
 	if err != nil {
@@ -152,7 +158,8 @@ func GetEnvironments() ([]structs.Environment, error) {
 	return targets, nil
 }
 
-func GetBox(environmentId string, boxName string, boxNamespace string, boxTempDirectory string) (*structs.Box, error) {
+// GetBox will return your box from tmp folder
+func GetBox(environmentID string, boxName string, boxNamespace string, boxTempDirectory string) (*structs.Box, error) {
 	err := ensureSaveFileAvailable()
 	if err != nil {
 		return nil, err
@@ -168,7 +175,7 @@ func GetBox(environmentId string, boxName string, boxNamespace string, boxTempDi
 	}
 
 	for _, env := range targets {
-		if env.Id == environmentId {
+		if env.ID == environmentID {
 			for _, box := range env.Boxes {
 				if box.Name == boxName && box.Namespace == boxNamespace && box.TempDirectory == boxTempDirectory {
 					return &box, nil
@@ -180,16 +187,17 @@ func GetBox(environmentId string, boxName string, boxNamespace string, boxTempDi
 	return nil, nil
 }
 
-func SaveBox(box structs.Box, environmentId string) error {
+// SaveBox will save your box to tmp folder
+func SaveBox(box structs.Box, environmentID string) error {
 	err := ensureSaveFileAvailable()
 	if err != nil {
 		return err
 	}
-	saved, err := IsEnvironmentSaved(environmentId)
+	saved, err := IsEnvironmentSaved(environmentID)
 	if err != nil || !saved {
 		return err
 	}
-	saved, err = IsBoxSaved(environmentId, box)
+	saved, err = IsBoxSaved(environmentID, box)
 	if err != nil || saved {
 		// already saved on this environment id or something went wrong
 		return err
@@ -202,7 +210,7 @@ func SaveBox(box structs.Box, environmentId string) error {
 	targets := []structs.Environment{}
 	err = json.Unmarshal(content, &targets)
 	for i, env := range targets {
-		if env.Id == environmentId {
+		if env.ID == environmentID {
 			targets[i].Boxes = append(env.Boxes, box)
 		}
 	}
@@ -216,16 +224,17 @@ func SaveBox(box structs.Box, environmentId string) error {
 	return nil
 }
 
-func RemoveBox(box structs.Box, environmentId string) error {
+// RemoveBox will remove your box from tmp folder
+func RemoveBox(box structs.Box, environmentID string) error {
 	err := ensureSaveFileAvailable()
 	if err != nil {
 		return err
 	}
-	saved, err := IsEnvironmentSaved(environmentId)
+	saved, err := IsEnvironmentSaved(environmentID)
 	if err != nil || !saved {
 		return err
 	}
-	saved, err = IsBoxSaved(environmentId, box)
+	saved, err = IsBoxSaved(environmentID, box)
 	if err != nil || !saved {
 		// not saved on this environment id or something went wrong
 		return err
@@ -238,7 +247,7 @@ func RemoveBox(box structs.Box, environmentId string) error {
 	targets := []structs.Environment{}
 	err = json.Unmarshal(content, &targets)
 	for t, env := range targets {
-		if env.Id == environmentId {
+		if env.ID == environmentID {
 			for i, savedBox := range env.Boxes {
 				if cmp.Equal(box, savedBox) {
 					targets[t].Boxes[i] = targets[t].Boxes[len(env.Boxes)-1]
@@ -262,6 +271,7 @@ func RemoveBox(box structs.Box, environmentId string) error {
 	return nil
 }
 
+// RemoveEnvironment will remove your environment from tmp folder
 func RemoveEnvironment(id string) error {
 	err := ensureSaveFileAvailable()
 	if err != nil {
@@ -281,7 +291,7 @@ func RemoveEnvironment(id string) error {
 	err = json.Unmarshal(content, &targets)
 
 	for i, env := range targets {
-		if env.Id == id {
+		if env.ID == id {
 			targets[i] = targets[len(targets)-1]
 			targets = targets[:len(targets)-1]
 			err = os.RemoveAll(env.TempDirectory)

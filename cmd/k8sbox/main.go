@@ -1,3 +1,4 @@
+// Package main - k8sbox entrypoint
 package main
 
 import (
