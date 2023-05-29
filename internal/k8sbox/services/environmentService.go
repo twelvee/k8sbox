@@ -39,7 +39,7 @@ func deleteEnvironment(environment *structs.Environment) error {
 }
 
 func GetActionConfig(namespace string) *action.Configuration {
-	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "minikube", namespace)
+	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "", namespace)
 	actionConfig := new(action.Configuration)
 	actionConfig.Init(restClientGetter, namespace, "secret", func(format string, v ...interface{}) {
 		fmt.Sprintf(format, v)
@@ -60,7 +60,6 @@ func deployEnvironment(environment *structs.Environment, isSaved bool) error {
 		}
 	}
 
-	//return releases, nil
 	return nil
 }
 
