@@ -1,3 +1,4 @@
+// Package commands is an entrypoint for every single cobra command available
 package commands
 
 import (
@@ -5,6 +6,7 @@ import (
 	"github.com/twelvee/k8sbox/internal/k8sbox/handlers"
 )
 
+// NewDescribeCommand is describe command entrypoint
 func NewDescribeCommand() *cobra.Command {
 	var (
 		command *cobra.Command
@@ -14,7 +16,7 @@ func NewDescribeCommand() *cobra.Command {
 		Short: "Get detailed information about saved environment",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleDescribeCommand(args[0], args[1], command.Context())
+			handlers.HandleDescribeCommand(command.Context(), args[0], args[1])
 			return nil
 		},
 	}

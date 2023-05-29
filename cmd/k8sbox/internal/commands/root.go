@@ -1,3 +1,4 @@
+// Package commands is an entrypoint for every single cobra command available
 package commands
 
 import (
@@ -8,6 +9,7 @@ var (
 	root *cobra.Command
 )
 
+// NewRootCommand is root command entrypoint
 func NewRootCommand() *cobra.Command {
 	root = &cobra.Command{
 		Use:   "k8sbox [command] [flags]",

@@ -1,3 +1,4 @@
+// Package services contains buisness-logic methods of the models
 package services
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 )
 
+// NewApplicationService creates a new ApplicationService
 func NewApplicationService() structs.ApplicationService {
 	return structs.ApplicationService{
 		ValidateApplications: validateApplications,
@@ -33,6 +35,7 @@ func validateApplications(applications []structs.Application) []string {
 	return messages
 }
 
+// ExpandApplications expand environment variables in applications array
 func ExpandApplications(applications []structs.Application) []structs.Application {
 	var newApplications []structs.Application
 	for _, a := range applications {

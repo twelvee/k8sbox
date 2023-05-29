@@ -1,3 +1,4 @@
+// Package services contains buisness-logic methods of the models
 package services
 
 import (
@@ -15,6 +16,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 )
 
+// NewBoxService creates a new BoxService
 func NewBoxService() structs.BoxService {
 	return structs.BoxService{
 		ProcessEnvValues:   processEnvValues,
@@ -94,6 +96,7 @@ func validateBoxes(boxes []structs.Box) error {
 	return nil
 }
 
+// InstallBox will deploy your box applications into your k8s cluster
 func InstallBox(box *structs.Box, environment structs.Environment) (*release.Release, error) {
 	config := GetActionConfig(box.Namespace)
 	client := action.NewInstall(config)
@@ -110,10 +113,11 @@ func InstallBox(box *structs.Box, environment structs.Environment) (*release.Rel
 	if err != nil {
 		return r, err
 	}
-	utils.SaveBox(*box, environment.Id)
+	utils.SaveBox(*box, environment.ID)
 	return r, nil
 }
 
+// UpgradeBox will upgrade your box applications in your k8s cluster
 func UpgradeBox(box *structs.Box, environment structs.Environment) (*release.Release, error) {
 	config := GetActionConfig(box.Namespace)
 	client := action.NewUpgrade(config)
@@ -129,10 +133,11 @@ func UpgradeBox(box *structs.Box, environment structs.Environment) (*release.Rel
 	if err != nil {
 		return r, err
 	}
-	utils.SaveBox(*box, environment.Id)
+	utils.SaveBox(*box, environment.ID)
 	return r, nil
 }
 
+// UninstallBox will uninstall your box applications from your k8s cluster
 func UninstallBox(box *structs.Box, environment structs.Environment) (*release.UninstallReleaseResponse, error) {
 	config := GetActionConfig(box.Namespace)
 	client := action.NewUninstall(config)
@@ -140,13 +145,14 @@ func UninstallBox(box *structs.Box, environment structs.Environment) (*release.U
 	if err != nil {
 		return r, err
 	}
-	err = utils.RemoveBox(*box, environment.Id)
+	err = utils.RemoveBox(*box, environment.ID)
 	if err != nil {
 		return r, err
 	}
 	return r, nil
 }
 
+// GetBox will return a helm release from your k8s cluster
 func GetBox(box *structs.Box) (*release.Release, error) {
 	config := GetActionConfig(box.Namespace)
 	client := action.NewGet(config)

@@ -1,3 +1,4 @@
+// Package commands is an entrypoint for every single cobra command available
 package commands
 
 import (
@@ -5,6 +6,7 @@ import (
 	"github.com/twelvee/k8sbox/internal/k8sbox/handlers"
 )
 
+// NewDeleteCommand is delete command entrypoint
 func NewDeleteCommand() *cobra.Command {
 	var (
 		command  *cobra.Command
@@ -14,7 +16,7 @@ func NewDeleteCommand() *cobra.Command {
 		Use:   "delete",
 		Short: "Uninstall environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleDeleteCommand(tomlFile, command.Context())
+			handlers.HandleDeleteCommand(command.Context(), tomlFile)
 			return nil
 		},
 	}

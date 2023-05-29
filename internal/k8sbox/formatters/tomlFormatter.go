@@ -1,7 +1,7 @@
+// Package formatters should contain toml/yaml formatters
 package formatters
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -9,10 +9,12 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 )
 
+// TomlFormatter is an environment toml formatter
 type TomlFormatter struct {
 	GetEnvironmentFromToml func(string) (structs.Environment, error)
 }
 
+// NewTomlFormatter creates a new Tomlformatter struct
 func NewTomlFormatter() TomlFormatter {
 	return TomlFormatter{
 		GetEnvironmentFromToml: getEnvironmentFromToml,
@@ -24,7 +26,7 @@ func getEnvironmentFromToml(tomlFile string) (structs.Environment, error) {
 
 	_, err := os.Stat(tomlFile)
 	if err != nil {
-		return structs.Environment{}, errors.New(fmt.Sprintf("File %s not found", tomlFile))
+		return structs.Environment{}, fmt.Errorf("File %s not found", tomlFile)
 	}
 
 	data, err := os.ReadFile(tomlFile)
