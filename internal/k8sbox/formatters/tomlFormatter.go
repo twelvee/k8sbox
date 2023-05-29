@@ -9,7 +9,7 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 )
 
-// Struct TomlFormatter is an environment toml formatter
+// TomlFormatter is an environment toml formatter
 type TomlFormatter struct {
 	GetEnvironmentFromToml func(string) (structs.Environment, error)
 }

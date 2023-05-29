@@ -134,7 +134,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment) error
 			return err
 		}
 
-		for ai, _ := range environment.Boxes[bi].Applications {
+		for ai := range environment.Boxes[bi].Applications {
 			environment.Boxes[bi].Applications[ai].TempDirectory = strings.Join([]string{environment.Boxes[bi].TempDirectory, "templates"}, "/")
 			os.Mkdir(environment.Boxes[bi].Applications[ai].TempDirectory, 0750)
 

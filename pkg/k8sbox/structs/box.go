@@ -3,7 +3,7 @@ package structs
 
 import "helm.sh/helm/v3/pkg/release"
 
-// Struct Box is your box in a struct
+// Box is your box in a struct
 type Box struct {
 	Type          string        `toml:"type"`
 	Applications  []Application `toml:"applications"`
@@ -14,7 +14,7 @@ type Box struct {
 	TempDirectory string        `toml:"-"`
 }
 
-// Struct BoxService is a public BoxService
+// BoxService is a public BoxService
 type BoxService struct {
 	ProcessEnvValues   func(map[string]interface{}, string) map[string]interface{}
 	ValidateBoxes      func([]Box) error

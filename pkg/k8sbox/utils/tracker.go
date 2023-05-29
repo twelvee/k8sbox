@@ -32,7 +32,7 @@ func ensureSaveFileAvailable() error {
 }
 
 // IsBoxSaved check if the box is already saved or not
-func IsBoxSaved(environmentId string, sbox structs.Box) (bool, error) {
+func IsBoxSaved(environmentID string, sbox structs.Box) (bool, error) {
 	err := ensureSaveFileAvailable()
 	if err != nil {
 		return false, err
@@ -48,7 +48,7 @@ func IsBoxSaved(environmentId string, sbox structs.Box) (bool, error) {
 	}
 
 	for _, env := range targets {
-		if env.Id == environmentId {
+		if env.Id == environmentID {
 			for _, box := range env.Boxes {
 				if cmp.Equal(box, sbox) {
 					return true, nil
@@ -225,16 +225,16 @@ func SaveBox(box structs.Box, environmentId string) error {
 }
 
 // RemoveBox will remove your box from tmp folder
-func RemoveBox(box structs.Box, environmentId string) error {
+func RemoveBox(box structs.Box, environmentID string) error {
 	err := ensureSaveFileAvailable()
 	if err != nil {
 		return err
 	}
-	saved, err := IsEnvironmentSaved(environmentId)
+	saved, err := IsEnvironmentSaved(environmentID)
 	if err != nil || !saved {
 		return err
 	}
-	saved, err = IsBoxSaved(environmentId, box)
+	saved, err = IsBoxSaved(environmentID, box)
 	if err != nil || !saved {
 		// not saved on this environment id or something went wrong
 		return err
@@ -247,7 +247,7 @@ func RemoveBox(box structs.Box, environmentId string) error {
 	targets := []structs.Environment{}
 	err = json.Unmarshal(content, &targets)
 	for t, env := range targets {
-		if env.Id == environmentId {
+		if env.Id == environmentID {
 			for i, savedBox := range env.Boxes {
 				if cmp.Equal(box, savedBox) {
 					targets[t].Boxes[i] = targets[t].Boxes[len(env.Boxes)-1]

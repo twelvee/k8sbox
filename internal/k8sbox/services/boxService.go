@@ -137,7 +137,7 @@ func UpgradeBox(box *structs.Box, environment structs.Environment) (*release.Rel
 	return r, nil
 }
 
-// Uninstall will uninstall your box applications from your k8s cluster
+// UninstallBox will uninstall your box applications from your k8s cluster
 func UninstallBox(box *structs.Box, environment structs.Environment) (*release.UninstallReleaseResponse, error) {
 	config := GetActionConfig(box.Namespace)
 	client := action.NewUninstall(config)

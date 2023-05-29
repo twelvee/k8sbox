@@ -129,7 +129,7 @@ func validateBoxesStep(environment *structs.Environment) {
 		os.Exit(1)
 	}
 
-	for i, _ := range environment.Boxes {
+	for i := range environment.Boxes {
 		err = k8sbox.GetBoxService().FillEmptyFields(&environment.Boxes[i], environment.Namespace)
 		if err != nil {
 			fmt.Println(" FAIL :(")
