@@ -1,4 +1,4 @@
-// Cobra commands
+// Package commands is an entrypoint for every single cobra command available
 package commands
 
 import (
