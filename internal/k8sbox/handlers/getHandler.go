@@ -12,7 +12,7 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 )
 
-func HandleGetCommand(getType string, flags []string, context context.Context) {
+func HandleGetCommand(context context.Context, getType string, flags []string) {
 	if getType == "environment" {
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 		columnFmt := color.New(color.FgYellow).SprintfFunc()

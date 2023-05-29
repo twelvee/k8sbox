@@ -14,7 +14,7 @@ func NewDeleteCommand() *cobra.Command {
 		Use:   "delete",
 		Short: "Uninstall environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleDeleteCommand(tomlFile, command.Context())
+			handlers.HandleDeleteCommand(command.Context(), tomlFile)
 			return nil
 		},
 	}

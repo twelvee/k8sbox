@@ -15,7 +15,7 @@ func NewGetCommand() *cobra.Command {
 		Short: "Get saved environments",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleGetCommand(args[0], flags, command.Context())
+			handlers.HandleGetCommand(command.Context(), args[0], flags)
 			return nil
 		},
 	}

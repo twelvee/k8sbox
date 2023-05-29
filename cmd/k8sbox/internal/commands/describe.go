@@ -14,7 +14,7 @@ func NewDescribeCommand() *cobra.Command {
 		Short: "Get detailed information about saved environment",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleDescribeCommand(args[0], args[1], command.Context())
+			handlers.HandleDescribeCommand(command.Context(), args[0], args[1])
 			return nil
 		},
 	}

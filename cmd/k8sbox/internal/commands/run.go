@@ -14,7 +14,7 @@ func NewRunCommand() *cobra.Command {
 		Use:   "run",
 		Short: "Run templated environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleRunCommand(tomlFile, command.Context())
+			handlers.HandleRunCommand(command.Context(), tomlFile)
 			return nil
 		},
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 )
 
-func HandleDescribeCommand(getType string, envId string, context context.Context) {
+func HandleDescribeCommand(context context.Context, getType string, envId string) {
 	if getType != "environment" {
 		fmt.Println("Invalid argument. Available types: environment")
 		os.Exit(1)
