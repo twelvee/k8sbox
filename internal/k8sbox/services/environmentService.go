@@ -27,13 +27,13 @@ func NewEnvironmentService() structs.EnvironmentService {
 
 func expandVariables(environment *structs.Environment) {
 	environment.Name = os.ExpandEnv(environment.Name)
-	environment.Id = os.ExpandEnv(environment.Id)
+	environment.ID = os.ExpandEnv(environment.ID)
 	environment.Namespace = os.ExpandEnv(environment.Namespace)
 	environment.Variables = os.ExpandEnv(environment.Variables)
 }
 
 func deleteEnvironment(environment *structs.Environment) error {
-	err := utils.RemoveEnvironment(environment.Id)
+	err := utils.RemoveEnvironment(environment.ID)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func deployEnvironment(environment *structs.Environment, isSaved bool) error {
 
 func createTempDeployDirectory(environment *structs.Environment, isSavedAlready bool) (string, error) {
 	if isSavedAlready {
-		env, err := utils.GetEnvironment(environment.Id)
+		env, err := utils.GetEnvironment(environment.ID)
 		if err != nil {
 			return "", err
 		}
@@ -104,7 +104,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment) error
 		return err
 	}
 	for bi, box := range environment.Boxes {
-		saved, err := utils.IsBoxSaved(environment.Id, box)
+		saved, err := utils.IsBoxSaved(environment.ID, box)
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func moveEnvironmentFilesToTempDirectory(environment *structs.Environment) error
 
 func validateEnvironment(environment *structs.Environment) error {
 	var messages []string
-	if len(strings.TrimSpace(environment.Id)) == 0 {
+	if len(strings.TrimSpace(environment.ID)) == 0 {
 		messages = append(messages, "Environment id is missing")
 	}
 

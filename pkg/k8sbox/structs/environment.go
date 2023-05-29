@@ -4,7 +4,7 @@ package structs
 // Environment is your environment in a struct
 type Environment struct {
 	Name          string `toml:"name"`
-	Id            string `toml:"ID"`
+	ID            string `toml:"id"`
 	Namespace     string `toml:"namespace"`
 	Boxes         []Box  `toml:"boxes"`
 	TempDirectory string `toml:"-"`

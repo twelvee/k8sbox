@@ -27,7 +27,7 @@ func HandleGetCommand(context context.Context, getType string, flags []string) {
 			os.Exit(1)
 		}
 		for _, widget := range environments {
-			tbl.AddRow(widget.Id, widget.Name, widget.Namespace, formatBoxesToTable(widget.Boxes))
+			tbl.AddRow(widget.ID, widget.Name, widget.Namespace, formatBoxesToTable(widget.Boxes))
 		}
 
 		tbl.Print()

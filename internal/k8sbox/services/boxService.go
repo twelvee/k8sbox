@@ -113,7 +113,7 @@ func InstallBox(box *structs.Box, environment structs.Environment) (*release.Rel
 	if err != nil {
 		return r, err
 	}
-	utils.SaveBox(*box, environment.Id)
+	utils.SaveBox(*box, environment.ID)
 	return r, nil
 }
 
@@ -133,7 +133,7 @@ func UpgradeBox(box *structs.Box, environment structs.Environment) (*release.Rel
 	if err != nil {
 		return r, err
 	}
-	utils.SaveBox(*box, environment.Id)
+	utils.SaveBox(*box, environment.ID)
 	return r, nil
 }
 
@@ -145,7 +145,7 @@ func UninstallBox(box *structs.Box, environment structs.Environment) (*release.U
 	if err != nil {
 		return r, err
 	}
-	err = utils.RemoveBox(*box, environment.Id)
+	err = utils.RemoveBox(*box, environment.ID)
 	if err != nil {
 		return r, err
 	}

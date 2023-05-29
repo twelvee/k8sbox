@@ -71,7 +71,7 @@ func expandBoxVariablesStep(environment *structs.Environment) {
 
 func checkIfEnvironmentIsSavedStep(environment structs.Environment) bool {
 	fmt.Print("Matching with already saved environments...")
-	saved, err := utils.IsEnvironmentSaved(environment.Id)
+	saved, err := utils.IsEnvironmentSaved(environment.ID)
 	if err != nil {
 		fmt.Println(" FAIL :(")
 		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
@@ -87,7 +87,7 @@ func checkIfEnvironmentIsSavedStep(environment structs.Environment) bool {
 
 func checkIfEnvironmentHasSameBoxesStep(environment *structs.Environment) {
 	fmt.Print("Matching boxes on founded environment...")
-	savedEnvironment, err := utils.GetEnvironment(environment.Id)
+	savedEnvironment, err := utils.GetEnvironment(environment.ID)
 	if err != nil {
 		fmt.Println(" FAIL :(")
 		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)

@@ -11,17 +11,17 @@ import (
 )
 
 // HandleDescribeCommand is the k8sbox describe command handler
-func HandleDescribeCommand(context context.Context, getType string, envId string) {
+func HandleDescribeCommand(context context.Context, getType string, envID string) {
 	if getType != "environment" {
 		fmt.Println("Invalid argument. Available types: environment")
 		os.Exit(1)
 	}
-	env, err := utils.GetEnvironment(envId)
+	env, err := utils.GetEnvironment(envID)
 	if err != nil {
 		fmt.Println("Environment not found")
 		os.Exit(1)
 	}
-	fmt.Println(fmt.Sprintf("Id: %s", env.Id))
+	fmt.Println(fmt.Sprintf("Id: %s", env.ID))
 	fmt.Println(fmt.Sprintf("Name: %s", env.Name))
 	fmt.Println(fmt.Sprintf("Namespace: %s", env.Namespace))
 	fmt.Println("------------------------------")
