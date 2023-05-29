@@ -1,3 +1,4 @@
+// Package handlers is used to handle cobra commands
 package handlers
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 )
 
+// HandleDescribeCommand is the k8sbox describe command handler
 func HandleDescribeCommand(context context.Context, getType string, envId string) {
 	if getType != "environment" {
 		fmt.Println("Invalid argument. Available types: environment")

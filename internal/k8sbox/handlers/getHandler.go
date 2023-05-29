@@ -1,3 +1,4 @@
+// Package handlers is used to handle cobra commands
 package handlers
 
 import (
@@ -12,6 +13,7 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 )
 
+// HandleGetCommand is the k8sbox get command handler
 func HandleGetCommand(context context.Context, getType string, flags []string) {
 	if getType == "environment" {
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
