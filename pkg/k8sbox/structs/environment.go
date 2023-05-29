@@ -1,5 +1,7 @@
+// Package structs contain every k8sbox public structs
 package structs
 
+// Struct Environment is your environment in a struct
 type Environment struct {
 	Name          string `toml:"name"`
 	Id            string `toml:"id"`
@@ -9,6 +11,7 @@ type Environment struct {
 	Variables     string `toml:"variables"`
 }
 
+// Struct EnvironmentService is a public EnvironmentService
 type EnvironmentService struct {
 	DeployEnvironment         func(*Environment, bool) error
 	DeleteEnvironment         func(*Environment) error
