@@ -1,3 +1,4 @@
+// Cobra commands
 package commands
 
 import (
@@ -5,6 +6,7 @@ import (
 	"github.com/twelvee/k8sbox/internal/k8sbox/handlers"
 )
 
+// Describe command entrypoint
 func NewDescribeCommand() *cobra.Command {
 	var (
 		command *cobra.Command

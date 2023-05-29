@@ -1,3 +1,4 @@
+// Cobra commands
 package commands
 
 import (
@@ -5,6 +6,7 @@ import (
 	"github.com/twelvee/k8sbox/internal/k8sbox/handlers"
 )
 
+// Delete command entrypoint
 func NewDeleteCommand() *cobra.Command {
 	var (
 		command  *cobra.Command

@@ -1,3 +1,4 @@
+// Cobra commands
 package commands
 
 import (
@@ -8,6 +9,7 @@ var (
 	root *cobra.Command
 )
 
+// Root command entrypoint
 func NewRootCommand() *cobra.Command {
 	root = &cobra.Command{
 		Use:   "k8sbox [command] [flags]",
