@@ -14,13 +14,13 @@ func RunEnvironment(tomlFile string) error {
 	environment := lookForEnvironmentStep(tomlFile)
 	expandEnvironmentVariablesStep(&environment)
 	expandBoxVariablesStep(&environment)
-	isSaved := checkIfEnvironmentIsSavedStep(environment)
 	validateEnvironmentStep(&environment)
 	validateBoxesStep(&environment)
+	isSaved := checkIfEnvironmentIsSavedStep(environment)
+	createTempDeployDirectoryStep(&environment, isSaved)
 	if isSaved {
 		checkIfEnvironmentHasSameBoxesStep(&environment)
 	}
-	createTempDeployDirectoryStep(&environment, isSaved)
 	deployEnvironmentStep(&environment, isSaved)
 
 	fmt.Println("Aight we're done here!")
@@ -93,7 +93,7 @@ func checkIfEnvironmentHasSameBoxesStep(environment *structs.Environment) {
 	fmt.Println(" OK")
 	if len(savedEnvironment.Boxes) > 0 {
 		fmt.Printf("Found %d legacy boxes. Removing...", len(savedEnvironment.Boxes))
-		os.Remove(environment.Variables)
+
 		for _, savedBox := range savedEnvironment.Boxes {
 			_, err := k8sbox.GetBoxService().UninstallBox(&savedBox, *environment)
 			if err != nil {

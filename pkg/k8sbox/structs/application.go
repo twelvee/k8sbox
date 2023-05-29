@@ -1,9 +1,9 @@
 package structs
 
 type Application struct {
-	Name          string
-	Chart         string
-	TempDirectory string
+	Name          string `toml:"name"`
+	Chart         string `toml:"chart"`
+	TempDirectory string `toml:"-"`
 }
 
 type ApplicationService struct {
