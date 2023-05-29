@@ -1,3 +1,4 @@
+// Package services contains buisness-logic methods of the models
 package services
 
 import (
@@ -13,6 +14,7 @@ import (
 	"helm.sh/helm/v3/pkg/kube"
 )
 
+// NewEnvironmentService creates a new EnvironmentService
 func NewEnvironmentService() structs.EnvironmentService {
 	return structs.EnvironmentService{
 		DeployEnvironment:         deployEnvironment,
@@ -38,6 +40,7 @@ func deleteEnvironment(environment *structs.Environment) error {
 	return nil
 }
 
+// GetActionConfig is loading your Kubeconfig into configuration struct
 func GetActionConfig(namespace string) *action.Configuration {
 	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "", namespace)
 	actionConfig := new(action.Configuration)

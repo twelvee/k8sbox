@@ -1,3 +1,4 @@
+// Package model is used as an model entrypoint
 package model
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 )
 
+// RunEnvironment prepare and deploy environment to your k8s cluster
 func RunEnvironment(tomlFile string) error {
 	environment := lookForEnvironmentStep(tomlFile)
 	expandEnvironmentVariablesStep(&environment)
@@ -27,6 +29,7 @@ func RunEnvironment(tomlFile string) error {
 	return nil
 }
 
+// DeleteEnvironment prepare and uninstall environment from your k8s cluster
 func DeleteEnvironment(tomlFile string) error {
 	environment := lookForEnvironmentStep(tomlFile)
 	expandEnvironmentVariablesStep(&environment)
