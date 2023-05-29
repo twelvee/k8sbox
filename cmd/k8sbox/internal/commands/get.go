@@ -6,7 +6,7 @@ import (
 	"github.com/twelvee/k8sbox/internal/k8sbox/handlers"
 )
 
-// Get command entrypoint
+// NewGetCommand is get command entrypoint
 func NewGetCommand() *cobra.Command {
 	var (
 		command *cobra.Command

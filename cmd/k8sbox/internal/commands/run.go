@@ -6,7 +6,7 @@ import (
 	"github.com/twelvee/k8sbox/internal/k8sbox/handlers"
 )
 
-// Run command entrypoint
+// NewRunCommand is run command entrypoint
 func NewRunCommand() *cobra.Command {
 	var (
 		command  *cobra.Command

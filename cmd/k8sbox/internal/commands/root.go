@@ -9,7 +9,7 @@ var (
 	root *cobra.Command
 )
 
-// Root command entrypoint
+// NewRootCommand is root command entrypoint
 func NewRootCommand() *cobra.Command {
 	root = &cobra.Command{
 		Use:   "k8sbox [command] [flags]",
