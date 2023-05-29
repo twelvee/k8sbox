@@ -1,3 +1,4 @@
+// Package utils is a useful utils that k8sbox use. Methods are usually exported
 package utils
 
 import (
@@ -7,6 +8,7 @@ import (
 var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-"
 var namespaceChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-"
 
+// GetShortID makes a short-id
 func GetShortID(length int) string {
 	ll := len(chars)
 	b := make([]byte, length)
@@ -17,6 +19,7 @@ func GetShortID(length int) string {
 	return string(b)
 }
 
+// GetShortNamespace makes a string compatable with k8s namespace requirements
 func GetShortNamespace(length int) string {
 	ll := len(namespaceChars)
 	b := make([]byte, length)
