@@ -5,15 +5,18 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/twelvee/k8sbox/internal/k8sbox"
+	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
+	"k8s.io/utils/strings/slices"
 )
 
 // HandleDescribeCommand is the k8sbox describe command handler
 func HandleDescribeCommand(context context.Context, getType string, envID string) {
-	if getType != "environment" {
-		fmt.Println("Invalid argument. Available types: environment")
+	if !slices.Contains(structs.GetEnvironmentAliases(), getType) {
+		fmt.Println(fmt.Sprintf("Invalid argument. Available types: %s", strings.Join(structs.GetEnvironmentAliases(), ", ")))
 		os.Exit(1)
 	}
 	env, err := utils.GetEnvironment(envID)

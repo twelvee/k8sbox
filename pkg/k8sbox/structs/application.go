@@ -13,3 +13,8 @@ type ApplicationService struct {
 	ValidateApplications func([]Application) []string
 	ExpandApplications   func([]Application) []Application
 }
+
+// GetApplicationAliases return a slice of application model name aliases
+func GetApplicationAliases() []string {
+	return []string{"application", "applications", "apps"}
+}

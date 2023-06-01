@@ -19,3 +19,8 @@ type EnvironmentService struct {
 	ValidateEnvironment       func(*Environment) error
 	ExpandVariables           func(*Environment)
 }
+
+// GetEnvironmentAliases return a slice of environment model name aliases
+func GetEnvironmentAliases() []string {
+	return []string{"environment", "environments", "env"}
+}
