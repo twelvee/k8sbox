@@ -29,17 +29,30 @@ func RunEnvironment(tomlFile string) error {
 	return nil
 }
 
-// DeleteEnvironment prepare and uninstall environment from your k8s cluster
-func DeleteEnvironment(tomlFile string) error {
+// DeleteEnvironmentByID will remove saved environment by environmentID
+func DeleteEnvironmentByID(environmentID string) error {
+	environment, err := utils.GetEnvironment(environmentID)
+	if err != nil {
+		return err
+	}
+	return deleteEnvironment(environment)
+}
+
+// DeleteEnvironmentByTomlFile will remove saved environment by initial toml file
+func DeleteEnvironmentByTomlFile(tomlFile string) error {
 	environment := lookForEnvironmentStep(tomlFile)
-	expandEnvironmentVariablesStep(&environment)
-	expandBoxVariablesStep(&environment)
-	isSaved := checkIfEnvironmentIsSavedStep(environment)
+	return deleteEnvironment(&environment)
+}
+
+func deleteEnvironment(environment *structs.Environment) error {
+	expandEnvironmentVariablesStep(environment)
+	expandBoxVariablesStep(environment)
+	isSaved := checkIfEnvironmentIsSavedStep(*environment)
 	if !isSaved {
 		return errors.New("Saved environment not found")
 	}
-	checkIfEnvironmentHasSameBoxesStep(&environment)
-	deleteEnvironmentStep(&environment)
+	checkIfEnvironmentHasSameBoxesStep(environment)
+	deleteEnvironmentStep(environment)
 
 	fmt.Println("Aight we're done here!")
 	return nil
