@@ -15,8 +15,8 @@ import (
 )
 
 // HandleGetCommand is the k8sbox get command handler
-func HandleGetCommand(context context.Context, getType string, flags []string) {
-	if slices.Contains(structs.GetEnvironmentAliases(), getType) {
+func HandleGetCommand(context context.Context, modelName string, flags []string) {
+	if slices.Contains(structs.GetEnvironmentAliases(), modelName) {
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 		columnFmt := color.New(color.FgYellow).SprintfFunc()
 

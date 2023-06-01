@@ -11,16 +11,18 @@ func NewDeleteCommand() *cobra.Command {
 	var (
 		command  *cobra.Command
 		tomlFile string
+		id       string
 	)
 	command = &cobra.Command{
 		Use:   "delete",
-		Short: "Uninstall environment",
+		Short: "Uninstall model",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleDeleteCommand(command.Context(), tomlFile)
+			handlers.HandleDeleteCommand(command.Context(), args[0], tomlFile, id)
 			return nil
 		},
 	}
+	command.Flags().StringVarP(&id, "id", "i", "", "Model ID")
 	command.Flags().StringVarP(&tomlFile, "file", "f", "", "Environment template file (toml)")
-	command.MarkFlagRequired("file")
 	return command
 }

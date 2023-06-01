@@ -14,8 +14,8 @@ import (
 )
 
 // HandleDescribeCommand is the k8sbox describe command handler
-func HandleDescribeCommand(context context.Context, getType string, envID string) {
-	if !slices.Contains(structs.GetEnvironmentAliases(), getType) {
+func HandleDescribeCommand(context context.Context, modelName string, envID string) {
+	if !slices.Contains(structs.GetEnvironmentAliases(), modelName) {
 		fmt.Println(fmt.Sprintf("Invalid argument. Available types: %s", strings.Join(structs.GetEnvironmentAliases(), ", ")))
 		os.Exit(1)
 	}
