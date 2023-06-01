@@ -11,11 +11,12 @@ import (
 	"github.com/rodaine/table"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
+	"k8s.io/utils/strings/slices"
 )
 
 // HandleGetCommand is the k8sbox get command handler
 func HandleGetCommand(context context.Context, getType string, flags []string) {
-	if getType == "environment" {
+	if slices.Contains(structs.GetEnvironmentAliases(), getType) {
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 		columnFmt := color.New(color.FgYellow).SprintfFunc()
 
@@ -33,7 +34,7 @@ func HandleGetCommand(context context.Context, getType string, flags []string) {
 		tbl.Print()
 		return
 	}
-	fmt.Println("Invalid argument. Available types: environment")
+	fmt.Println(fmt.Sprintf("Invalid argument. Available types: %s", strings.Join(structs.GetEnvironmentAliases(), ", ")))
 	os.Exit(1)
 }
 

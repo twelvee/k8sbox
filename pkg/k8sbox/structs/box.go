@@ -33,3 +33,8 @@ func Helm() string {
 func Plain() string {
 	return "plain"
 }
+
+// GetBoxAliaces return a slice of box model name aliases
+func GetBoxAliaces() []string {
+	return []string{"box", "boxes"}
+}
