@@ -1,4 +1,4 @@
-id = "${TEST_ENV}" # It could be your ${CI_SLUG} for example
+id = "${TEST_ENV}" # It can be your ${CI_SLUG} for example
 name = "test environment"
 namespace = "test"
 variables = "${PWD}/examples/environments/.env"

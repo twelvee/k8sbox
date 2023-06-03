@@ -1,4 +1,4 @@
-// Package handlers is used to handle cobra commands
+// Package handlers is used to process Cobra commands
 package handlers
 
 import (
@@ -13,7 +13,7 @@ import (
 func HandleRunCommand(context context.Context, tomlFile string) {
 	err := model.RunEnvironment(tomlFile)
 	if err != nil {
-		fmt.Println("\n\rFailed to run environment. ", err)
+		fmt.Println("Failed to run environment. ", err)
 		os.Exit(1)
 	}
 }

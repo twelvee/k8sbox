@@ -1,4 +1,4 @@
-// Package handlers is used to handle cobra commands
+// Package handlers is used to process Cobra commands
 package handlers
 
 import (
@@ -16,7 +16,7 @@ import (
 // HandleDescribeCommand is the k8sbox describe command handler
 func HandleDescribeCommand(context context.Context, modelName string, envID string) {
 	if !slices.Contains(structs.GetEnvironmentAliases(), modelName) {
-		fmt.Println(fmt.Sprintf("Invalid argument. Available types: %s", strings.Join(structs.GetEnvironmentAliases(), ", ")))
+		fmt.Printf("An invalid argument. Available arguments: %s\r\n", strings.Join(structs.GetEnvironmentAliases(), ", "))
 		os.Exit(1)
 	}
 	env, err := utils.GetEnvironment(envID)
@@ -24,36 +24,36 @@ func HandleDescribeCommand(context context.Context, modelName string, envID stri
 		fmt.Println("Environment not found")
 		os.Exit(1)
 	}
-	fmt.Println(fmt.Sprintf("Id: %s", env.ID))
-	fmt.Println(fmt.Sprintf("Name: %s", env.Name))
-	fmt.Println(fmt.Sprintf("Namespace: %s", env.Namespace))
+	fmt.Printf("Id: %s\r\n", env.ID)
+	fmt.Printf("Name: %s\r\n", env.Name)
+	fmt.Printf("Namespace: %s\r\n", env.Namespace)
 	fmt.Println("------------------------------")
-	fmt.Println(fmt.Sprintf("Boxes: %d", len(env.Boxes)))
+	fmt.Printf("Boxes: %d\r\n", len(env.Boxes))
 	for i, b := range env.Boxes {
-		fmt.Println(fmt.Sprintf("Box %d:", i))
+		fmt.Printf("Box %d:\r\n", i)
 		r, err := k8sbox.GetBoxService().GetBox(&b)
 		if err != nil {
-			fmt.Println("Something wrong with the box. Can't query.")
+			fmt.Println("Something went wrong with the box. Unable to retrieve data.")
 			fmt.Println(err.Error())
 			continue
 		}
-		fmt.Println(fmt.Sprintf("Name: %s", b.Name))
-		fmt.Println(fmt.Sprintf("Namespace: %s", b.Namespace))
+		fmt.Printf("Name: %s\r\n", b.Name)
+		fmt.Printf("Namespace: %s\r\n", b.Namespace)
 		fmt.Println("------ Chart ------")
-		fmt.Println(fmt.Sprintf("API Version: %s", r.Chart.Metadata.APIVersion))
-		fmt.Println(fmt.Sprintf("App Version: %s", r.Chart.Metadata.AppVersion))
-		fmt.Println(fmt.Sprintf("Name: %s", r.Chart.Metadata.Name))
-		fmt.Println(fmt.Sprintf("Version: %s", r.Chart.Metadata.Version))
+		fmt.Printf("API Version: %s\r\n", r.Chart.Metadata.APIVersion)
+		fmt.Printf("App Version: %s\r\n", r.Chart.Metadata.AppVersion)
+		fmt.Printf("Name: %s\r\n", r.Chart.Metadata.Name)
+		fmt.Printf("Version: %s\r\n", r.Chart.Metadata.Version)
 		fmt.Println("------ Release ------")
-		fmt.Println(fmt.Sprintf("Version: %d", r.Version))
-		fmt.Println(fmt.Sprintf("Name: %s", r.Name))
-		fmt.Println(fmt.Sprintf("Namespace: %s", r.Namespace))
-		fmt.Println(fmt.Sprintf("Status: %s", r.Info.Status.String()))
-		fmt.Println(fmt.Sprintf("Notes: %s", r.Info.Notes))
-		fmt.Println(fmt.Sprintf("First deployed: %s", r.Info.FirstDeployed))
-		fmt.Println(fmt.Sprintf("Last deployed: %s", r.Info.LastDeployed))
-		fmt.Println(fmt.Sprintf("Deleted: %s", r.Info.Deleted))
-		fmt.Println("------ Labels ------")
+		fmt.Printf("Version: %d\r\n", r.Version)
+		fmt.Printf("Name: %s\r\n", r.Name)
+		fmt.Printf("Namespace: %s\r\n", r.Namespace)
+		fmt.Printf("Status: %s\r\n", r.Info.Status.String())
+		fmt.Printf("Notes: %s\r\n", r.Info.Notes)
+		fmt.Printf("First deployed: %s\r\n", r.Info.FirstDeployed)
+		fmt.Printf("Last deployed: %s\r\n", r.Info.LastDeployed)
+		fmt.Printf("Deleted: %s\r\n", r.Info.Deleted)
+		fmt.Printf("------ Labels ------")
 		for _, l := range r.Labels {
 			fmt.Printf("%s ", l)
 		}
