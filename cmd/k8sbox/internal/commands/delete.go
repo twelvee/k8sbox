@@ -12,12 +12,23 @@ func NewDeleteCommand() *cobra.Command {
 		command  *cobra.Command
 		tomlFile string
 		id       string
+
+		getExample = `
+		k8sbox delete environment -i {EnvironmentID} // will delete the environment by reference to its ID
+
+		k8sbox delete env -i {EnvironmentID} // will delete the environment by reference to its ID
+
+		k8sbox delete environment --file ./examples/environments/example_environment.toml // will delete the environment by reference to its toml specification
+
+		k8sbox delete env --file ./examples/environments/example_environment.toml // will delete the environment by reference to its toml specification
+		`
 	)
 	command = &cobra.Command{
-		Use:   "delete",
-		Short: "Delete a resource",
-		Long:  "Remove the resource from your k8s cluster. Use requires specifying the type of the resource as the first argument, as well as one of the flags indicating that the resource belongs to it.",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "delete",
+		Short:   "Delete a resource",
+		Long:    "Remove the resource from your k8s cluster. Use requires specifying the type of the resource as the first argument, as well as one of the flags indicating that the resource belongs to it.",
+		Example: getExample,
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			handlers.HandleDeleteCommand(command.Context(), args[0], tomlFile, id)
 			return nil

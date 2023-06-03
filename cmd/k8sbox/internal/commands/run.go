@@ -11,11 +11,18 @@ func NewRunCommand() *cobra.Command {
 	var (
 		command  *cobra.Command
 		tomlFile string
+
+		getExample = `
+		k8sbox run --file /examples/environments/example_environment.toml // Rolls out the environment based on the toml specification
+
+		k8sbox run -f /examples/environments/example_environment.toml // Rolls out the environment based on the toml specification
+		`
 	)
 	command = &cobra.Command{
-		Use:   "run",
-		Short: "Run the environment",
-		Long:  "Run the environment with the toml specification.",
+		Use:     "run",
+		Short:   "Run the environment",
+		Long:    "Run the environment with the toml specification.",
+		Example: getExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			handlers.HandleRunCommand(command.Context(), tomlFile)
 			return nil

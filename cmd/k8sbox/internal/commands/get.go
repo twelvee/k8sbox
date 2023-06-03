@@ -11,12 +11,21 @@ func NewGetCommand() *cobra.Command {
 	var (
 		command *cobra.Command
 		flags   []string
+
+		getExample = `
+		k8sbox get environments // get a list of saved environments
+
+		k8sbox get environment // get a list of saved environments
+
+		k8sbox get env // get a list of saved environments
+		`
 	)
 	command = &cobra.Command{
-		Use:   "get",
-		Short: "Get a list of saved resources",
-		Long:  "Get a list of earlier created resources. Use requires the resource type as the first argument.",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get",
+		Short:   "Get a list of saved resources",
+		Long:    "Get a list of earlier created resources. Use requires the resource type as the first argument.",
+		Example: getExample,
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			handlers.HandleGetCommand(command.Context(), args[0], flags)
 			return nil
