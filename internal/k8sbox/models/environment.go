@@ -1,4 +1,4 @@
-// Package model is used as an model entrypoint
+// Package model is used as an model entry point
 package model
 
 import (
@@ -11,7 +11,7 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 )
 
-// RunEnvironment prepare and deploy environment to your k8s cluster
+// RunEnvironment will prepare and deploy environment to your k8s cluster
 func RunEnvironment(tomlFile string) error {
 	environment := lookForEnvironmentStep(tomlFile)
 	expandEnvironmentVariablesStep(&environment)
@@ -25,11 +25,11 @@ func RunEnvironment(tomlFile string) error {
 	}
 	deployEnvironmentStep(&environment, isSaved)
 
-	fmt.Println("Aight we're done here!")
+	fmt.Println("Alright, we're done here!")
 	return nil
 }
 
-// DeleteEnvironmentByID will remove saved environment by environmentID
+// DeleteEnvironmentByID will delete saved environment by environmentID
 func DeleteEnvironmentByID(environmentID string) error {
 	environment, err := utils.GetEnvironment(environmentID)
 	if err != nil {
@@ -38,7 +38,7 @@ func DeleteEnvironmentByID(environmentID string) error {
 	return deleteEnvironment(environment)
 }
 
-// DeleteEnvironmentByTomlFile will remove saved environment by initial toml file
+// DeleteEnvironmentByTomlFile will delete saved environment by initial toml file
 func DeleteEnvironmentByTomlFile(tomlFile string) error {
 	environment := lookForEnvironmentStep(tomlFile)
 	return deleteEnvironment(&environment)
@@ -49,17 +49,17 @@ func deleteEnvironment(environment *structs.Environment) error {
 	expandBoxVariablesStep(environment)
 	isSaved := checkIfEnvironmentIsSavedStep(*environment)
 	if !isSaved {
-		return errors.New("Saved environment not found")
+		return errors.New("Saved environment not found.")
 	}
 	checkIfEnvironmentHasSameBoxesStep(environment)
 	deleteEnvironmentStep(environment)
 
-	fmt.Println("Aight we're done here!")
+	fmt.Println("Alright, we're done here!")
 	return nil
 }
 
 func lookForEnvironmentStep(tomlFile string) structs.Environment {
-	fmt.Print("Looking for environment...")
+	fmt.Print("Looking for the environment...")
 	environment, err := k8sbox.GetTomlFormatter().GetEnvironmentFromToml(tomlFile)
 	if err != nil {
 		fmt.Println(" FAIL :(")
@@ -83,7 +83,7 @@ func expandBoxVariablesStep(environment *structs.Environment) {
 }
 
 func checkIfEnvironmentIsSavedStep(environment structs.Environment) bool {
-	fmt.Print("Matching with already saved environments...")
+	fmt.Print("Matching it with already saved environments...")
 	saved, err := utils.IsEnvironmentSaved(environment.ID)
 	if err != nil {
 		fmt.Println(" FAIL :(")
@@ -99,7 +99,7 @@ func checkIfEnvironmentIsSavedStep(environment structs.Environment) bool {
 }
 
 func checkIfEnvironmentHasSameBoxesStep(environment *structs.Environment) {
-	fmt.Print("Matching boxes on founded environment...")
+	fmt.Print("Matching boxes in the saved environment...")
 	savedEnvironment, err := utils.GetEnvironment(environment.ID)
 	if err != nil {
 		fmt.Println(" FAIL :(")
@@ -108,7 +108,7 @@ func checkIfEnvironmentHasSameBoxesStep(environment *structs.Environment) {
 	}
 	fmt.Println(" OK")
 	if len(savedEnvironment.Boxes) > 0 {
-		fmt.Printf("Found %d legacy boxes. Removing...", len(savedEnvironment.Boxes))
+		fmt.Printf("Found %d legacy boxes. Uninstalling...", len(savedEnvironment.Boxes))
 
 		for _, savedBox := range savedEnvironment.Boxes {
 			_, err := k8sbox.GetBoxService().UninstallBox(&savedBox, *environment)
@@ -123,7 +123,7 @@ func checkIfEnvironmentHasSameBoxesStep(environment *structs.Environment) {
 }
 
 func validateEnvironmentStep(environment *structs.Environment) {
-	fmt.Print("Validating environment...")
+	fmt.Print("Validating the environment...")
 	err := k8sbox.GetEnvironmentService().ValidateEnvironment(environment)
 	if err != nil {
 		fmt.Println(" FAIL :(")
@@ -177,7 +177,7 @@ func deployEnvironmentStep(environment *structs.Environment, isSaved bool) {
 }
 
 func deleteEnvironmentStep(environment *structs.Environment) {
-	fmt.Print("Deleting environment...")
+	fmt.Print("Deleting...")
 	err := k8sbox.GetEnvironmentService().DeleteEnvironment(environment)
 	if err != nil {
 		fmt.Println(" FAIL :(")
