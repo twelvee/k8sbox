@@ -5,14 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/twelvee/k8sbox/internal/k8sbox"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 )
 
+var s = spinner.New(spinner.CharSets[21], 100*time.Millisecond)
+
 // RunEnvironment will prepare and deploy environment to your k8s cluster
 func RunEnvironment(tomlFile string) error {
+	start := time.Now()
+	s.Start()
 	environment := lookForEnvironmentStep(tomlFile)
 	expandEnvironmentVariablesStep(&environment)
 	expandBoxVariablesStep(&environment)
@@ -24,8 +31,9 @@ func RunEnvironment(tomlFile string) error {
 		checkIfEnvironmentHasSameBoxesStep(&environment)
 	}
 	deployEnvironmentStep(&environment, isSaved)
-
+	s.Stop()
 	fmt.Println("Alright, we're done here!")
+	fmt.Printf("It took %.2fs.\r\n", time.Since(start).Seconds())
 	return nil
 }
 
@@ -45,6 +53,7 @@ func DeleteEnvironmentByTomlFile(tomlFile string) error {
 }
 
 func deleteEnvironment(environment *structs.Environment) error {
+	start := time.Now()
 	expandEnvironmentVariablesStep(environment)
 	expandBoxVariablesStep(environment)
 	isSaved := checkIfEnvironmentIsSavedStep(*environment)
@@ -55,134 +64,145 @@ func deleteEnvironment(environment *structs.Environment) error {
 	deleteEnvironmentStep(environment)
 
 	fmt.Println("Alright, we're done here!")
+	fmt.Printf("It took %.2fs.\r\n", time.Since(start).Seconds())
 	return nil
 }
 
 func lookForEnvironmentStep(tomlFile string) structs.Environment {
-	fmt.Print("Looking for the environment...")
+	s.Suffix = " Looking for the environment..."
 	environment, err := k8sbox.GetTomlFormatter().GetEnvironmentFromToml(tomlFile)
 	if err != nil {
-		fmt.Println(" FAIL :(")
-		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 		os.Exit(1)
 	}
-	fmt.Println(" OK")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 	return environment
 }
 
 func expandEnvironmentVariablesStep(environment *structs.Environment) {
-	fmt.Print("Expanding environment variables...")
+	s.Suffix = " Expanding environment variables..."
 	k8sbox.GetEnvironmentService().ExpandVariables(environment)
-	fmt.Println(" OK")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 }
 
 func expandBoxVariablesStep(environment *structs.Environment) {
-	fmt.Print("Expanding box variables...")
+	s.Suffix = " Expanding box variables..."
 	environment.Boxes = k8sbox.GetBoxService().ExpandBoxVariables(environment.Boxes)
-	fmt.Println(" OK")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 }
 
 func checkIfEnvironmentIsSavedStep(environment structs.Environment) bool {
-	fmt.Print("Matching it with already saved environments...")
+	s.Suffix = " Matching it with already saved environments..."
 	saved, err := utils.IsEnvironmentSaved(environment.ID)
 	if err != nil {
-		fmt.Println(" FAIL :(")
-		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 		os.Exit(1)
 	}
 	if saved {
-		fmt.Println(" OK - SAVED")
+		s.Suffix = strings.Join([]string{s.Suffix, "OK. Saved."}, " ")
 		return true
 	}
-	fmt.Println(" OK - NEW")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK. New."}, " ")
 	return false
 }
 
 func checkIfEnvironmentHasSameBoxesStep(environment *structs.Environment) {
-	fmt.Print("Matching boxes in the saved environment...")
+	s.Suffix = " Matching boxes in the saved environment..."
 	savedEnvironment, err := utils.GetEnvironment(environment.ID)
 	if err != nil {
-		fmt.Println(" FAIL :(")
-		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 		os.Exit(1)
 	}
-	fmt.Println(" OK")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 	if len(savedEnvironment.Boxes) > 0 {
-		fmt.Printf("Found %d legacy boxes. Uninstalling...", len(savedEnvironment.Boxes))
+		s.Suffix = fmt.Sprintf(" Found %d legacy boxes. Uninstalling...", len(savedEnvironment.Boxes))
 
 		for _, savedBox := range savedEnvironment.Boxes {
 			_, err := k8sbox.GetBoxService().UninstallBox(&savedBox, *environment)
 			if err != nil {
-				fmt.Println(" FAIL :(")
-				fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+				s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+				s.Stop()
+				fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 				os.Exit(1)
 			}
 		}
-		fmt.Println(" OK")
+		s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 	}
 }
 
 func validateEnvironmentStep(environment *structs.Environment) {
-	fmt.Print("Validating the environment...")
+	s.Suffix = " Validating the environment..."
 	err := k8sbox.GetEnvironmentService().ValidateEnvironment(environment)
 	if err != nil {
-		fmt.Println(" FAIL :(")
-		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 		os.Exit(1)
 	}
-	fmt.Println(" OK")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 }
 
 func validateBoxesStep(environment *structs.Environment) {
-	fmt.Print("Validating boxes...")
+	s.Suffix = " Validating boxes..."
 	err := k8sbox.GetBoxService().ValidateBoxes(environment.Boxes)
 	if err != nil {
-		fmt.Println(" FAIL :(")
-		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 		os.Exit(1)
 	}
 
 	for i := range environment.Boxes {
 		err = k8sbox.GetBoxService().FillEmptyFields(&environment.Boxes[i], environment.Namespace)
 		if err != nil {
-			fmt.Println(" FAIL :(")
-			fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+			s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+			s.Stop()
+			fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 			os.Exit(1)
 		}
 	}
-	fmt.Println(" OK")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 }
 
 func createTempDeployDirectoryStep(environment *structs.Environment, isSaved bool) {
-	fmt.Print("Moving files to a temporary directory...")
+	s.Suffix = " Moving files to a temporary directory..."
 	var err error
 	environment.TempDirectory, err = k8sbox.GetEnvironmentService().CreateTempDeployDirectory(environment, isSaved)
 	if err != nil {
-		fmt.Println(" FAIL :(")
-		fmt.Fprintf(os.Stderr, "\n\rReasons: \n\r%s\n\r", err)
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 		os.Exit(1)
 	}
-	fmt.Println(" OK")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 }
 
 func deployEnvironmentStep(environment *structs.Environment, isSaved bool) {
-	fmt.Print("Deploying...")
+	s.Suffix = " Deploying..."
 	err := k8sbox.GetEnvironmentService().DeployEnvironment(environment, isSaved)
 	if err != nil {
-		fmt.Println(" FAIL :(")
-		fmt.Fprintf(os.Stderr, "Reasons: \n\r%s\n\r", err)
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 		os.Exit(1)
 	}
-	fmt.Println(" OK")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 }
 
 func deleteEnvironmentStep(environment *structs.Environment) {
-	fmt.Print("Deleting...")
+	s.Suffix = " Deleting..."
 	err := k8sbox.GetEnvironmentService().DeleteEnvironment(environment)
 	if err != nil {
-		fmt.Println(" FAIL :(")
-		fmt.Fprintf(os.Stderr, "Reasons: \n\r%s\n\r", err)
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
 		os.Exit(1)
 	}
-	fmt.Println(" OK")
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 }
