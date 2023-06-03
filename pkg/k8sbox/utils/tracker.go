@@ -138,7 +138,7 @@ func GetEnvironment(id string) (*structs.Environment, error) {
 			return &env, nil
 		}
 	}
-	return nil, errors.New("Environment not found")
+	return nil, errors.New("Environment not found.")
 }
 
 // GetEnvironments will return all your environments from tmp folder
