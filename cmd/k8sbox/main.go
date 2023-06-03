@@ -1,4 +1,4 @@
-// Package main - k8sbox entrypoint
+// Package main - entry point to the program
 package main
 
 import (

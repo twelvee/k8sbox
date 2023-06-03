@@ -1,4 +1,4 @@
-// Package handlers is used to handle cobra commands
+// Package handlers is used to process Cobra commands
 package handlers
 
 import (
@@ -24,7 +24,7 @@ func HandleGetCommand(context context.Context, modelName string, flags []string)
 		tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 		environments, err := utils.GetEnvironments()
 		if err != nil {
-			fmt.Println("No environments found")
+			fmt.Println("No environments found.")
 			os.Exit(1)
 		}
 		for _, widget := range environments {
@@ -34,7 +34,7 @@ func HandleGetCommand(context context.Context, modelName string, flags []string)
 		tbl.Print()
 		return
 	}
-	fmt.Println(fmt.Sprintf("Invalid argument. Available types: %s", strings.Join(structs.GetEnvironmentAliases(), ", ")))
+	fmt.Printf("An invalid argument. Available arguments: %s", strings.Join(structs.GetEnvironmentAliases(), ", "))
 	os.Exit(1)
 }
 

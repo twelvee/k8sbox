@@ -1,4 +1,4 @@
-// Package handlers is used to handle cobra commands
+// Package handlers is used to process Cobra commands
 package handlers
 
 import (
@@ -15,23 +15,23 @@ import (
 // HandleDeleteCommand is the k8sbox delete command handler
 func HandleDeleteCommand(context context.Context, modelName string, tomlFile string, environmentID string) {
 	if !slices.Contains(structs.GetEnvironmentAliases(), modelName) {
-		fmt.Printf("Invalid argument. Available types: %s\r\n", strings.Join(structs.GetEnvironmentAliases(), ", "))
+		fmt.Printf("An invalid argument. Available arguments: %s\r\n", strings.Join(structs.GetEnvironmentAliases(), ", "))
 		os.Exit(1)
 	}
 	if len(strings.TrimSpace(tomlFile)) != 0 {
 		err := model.DeleteEnvironmentByTomlFile(tomlFile)
 		if err != nil {
-			fmt.Println("\n\rFailed to delete environment.", err)
+			fmt.Println("Failed to delete environment.", err)
 		}
 		os.Exit(1)
 	}
 	if len(strings.TrimSpace(environmentID)) != 0 {
 		err := model.DeleteEnvironmentByID(environmentID)
 		if err != nil {
-			fmt.Println("\n\rFailed to delete environment.", err)
+			fmt.Println("Failed to delete environment.", err)
 		}
 		os.Exit(1)
 	}
-	fmt.Println("\n\rFailed to delete environment. No environment ID or environment toml file present.")
+	fmt.Println("The resource could not be deleted. None of the flags pointing to the resource are present.")
 	os.Exit(1)
 }

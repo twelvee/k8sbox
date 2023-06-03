@@ -1,4 +1,4 @@
-// Package formatters should contain toml/yaml formatters
+// Package formatters contains all text and file formatters
 package formatters
 
 import (
