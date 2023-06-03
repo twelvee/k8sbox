@@ -165,7 +165,7 @@ func validateEnvironment(environment *structs.Environment) error {
 	if len(strings.TrimSpace(environment.Variables)) > 0 {
 		_, err := os.Stat(environment.Variables)
 		if err != nil {
-			messages = append(messages, fmt.Sprintf("Environment variables specified but file missing (%s)", environment.Variables))
+			messages = append(messages, fmt.Sprintf("Environment variables specified but the file is missing (%s)", environment.Variables))
 		}
 	}
 
