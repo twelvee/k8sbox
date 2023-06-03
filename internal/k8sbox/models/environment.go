@@ -4,6 +4,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/twelvee/k8sbox/internal/k8sbox"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
+	"k8s.io/utils/strings/slices"
 )
 
 var s = spinner.New(spinner.CharSets[21], 100*time.Millisecond)
@@ -21,6 +23,9 @@ func RunEnvironment(tomlFile string) error {
 	start := time.Now()
 	s.Start()
 	environment := lookForEnvironmentStep(tomlFile)
+	if len(strings.TrimSpace(environment.LoadBoxesFrom)) != 0 {
+		loadBoxesStep(&environment)
+	}
 	expandEnvironmentVariablesStep(&environment)
 	expandBoxVariablesStep(&environment)
 	validateEnvironmentStep(&environment)
@@ -79,6 +84,32 @@ func lookForEnvironmentStep(tomlFile string) structs.Environment {
 	}
 	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 	return environment
+}
+
+func loadBoxesStep(environment *structs.Environment) {
+	s.Suffix = " Download boxes..."
+	u, err := url.Parse(environment.LoadBoxesFrom)
+	if err != nil {
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
+		os.Exit(1)
+	}
+	if !slices.Contains(structs.GetAvailableDownloadSchemes(), u.Scheme) {
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed. Available load_boxes_from scheme is %s\n\r", strings.Join(structs.GetAvailableDownloadSchemes(), ", "))
+		os.Exit(1)
+	}
+	newEnvironment, err := k8sbox.GetTomlFormatter().GetEnvironmentViaHTTP(environment.LoadBoxesFrom)
+	if err != nil {
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
+		os.Exit(1)
+	}
+
+	environment.Boxes = newEnvironment.Boxes
 }
 
 func expandEnvironmentVariablesStep(environment *structs.Environment) {

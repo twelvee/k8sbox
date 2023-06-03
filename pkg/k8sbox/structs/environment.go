@@ -9,6 +9,7 @@ type Environment struct {
 	Boxes         []Box  `toml:"boxes"`
 	TempDirectory string `toml:"-"`
 	Variables     string `toml:"variables"`
+	LoadBoxesFrom string `toml:"load_boxes_from"`
 }
 
 // EnvironmentService is a public EnvironmentService
@@ -23,4 +24,8 @@ type EnvironmentService struct {
 // GetEnvironmentAliases return a slice of environment model name aliases
 func GetEnvironmentAliases() []string {
 	return []string{"environment", "environments", "env"}
+}
+
+func GetAvailableDownloadSchemes() []string {
+	return []string{"http", "https"}
 }

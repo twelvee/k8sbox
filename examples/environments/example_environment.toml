@@ -3,35 +3,4 @@ name = "test environment"
 namespace = "test"
 variables = "${PWD}/examples/environments/.env"
 
-[[boxes]]
-type = "helm"
-chart = "${PWD}/examples/environments/box1/Chart.yaml"
-values = "${PWD}/examples/environments/box1/values.yaml"
-name = "first-box-2"
-    [[boxes.applications]]
-    name = "service-nginx-1"
-    chart = "${PWD}/examples/environments/box1/templates/api-nginx-service.yaml"
-    [[boxes.applications]]
-    name = "deployment-nginx-1"
-    chart = "${PWD}/examples/environments/box1/templates/api-nginx-deployment.yaml"
-
-[[boxes]]
-type = "helm"
-chart = "${PWD}/examples/environments/box2/Chart.yaml"
-values = "${PWD}/examples/environments/box2/values.yaml"
-name = "second-box-2"
-    [[boxes.applications]]
-    name = "service-nginx-2"
-    chart = "${PWD}/examples/environments/box2/templates/api-nginx-service.yaml"
-    [[boxes.applications]]
-    name = "deployment-nginx-2"
-    chart = "${PWD}/examples/environments/box2/templates/api-nginx-deployment.yaml"
-
-[[boxes]]
-type = "helm"
-chart = "${PWD}/examples/environments/ingress/Chart.yaml"
-name = "third-box"
-values = "${PWD}/examples/environments/ingress/values.yaml"
-    [[boxes.applications]]
-    name = "www-ingress-toml"
-    chart = "${PWD}/examples/environments/ingress/templates/ingress.yaml"
+load_boxes_from = "https://raw.githubusercontent.com/twelvee/k8sbox/load-boxes-via-http/examples/environments/example_boxes.toml"
