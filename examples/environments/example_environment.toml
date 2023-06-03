@@ -4,3 +4,11 @@ namespace = "test"
 variables = "${PWD}/examples/environments/.env"
 
 load_boxes_from = "https://raw.githubusercontent.com/twelvee/k8sbox/load-boxes-via-http/examples/environments/example_boxes.toml"
+[load_boxes_headers]
+    [load_boxes_headers.0]
+    name = "Content-Type"
+    value = "application/toml"
+    [load_boxes_headers.1]
+    name = "Accept"
+    value = "application/toml"
+

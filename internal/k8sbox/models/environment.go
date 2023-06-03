@@ -101,7 +101,7 @@ func loadBoxesStep(environment *structs.Environment) {
 		fmt.Fprintf(os.Stderr, "Failed. Available load_boxes_from scheme is %s\n\r", strings.Join(structs.GetAvailableDownloadSchemes(), ", "))
 		os.Exit(1)
 	}
-	newEnvironment, err := k8sbox.GetTomlFormatter().GetEnvironmentViaHTTP(environment.LoadBoxesFrom)
+	newEnvironment, err := k8sbox.GetTomlFormatter().GetEnvironmentViaHTTP(environment.LoadBoxesFrom, environment.LoadBoxesHeaders)
 	if err != nil {
 		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
 		s.Stop()
