@@ -12,6 +12,7 @@ import (
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/kube"
+	"k8s.io/client-go/rest"
 )
 
 // NewEnvironmentService creates a new EnvironmentService
@@ -40,15 +41,19 @@ func deleteEnvironment(environment *structs.Environment) error {
 	return nil
 }
 
-// GetActionConfig is loading your Kubeconfig into configuration struct
-func GetActionConfig(namespace string) *action.Configuration {
+// GetConfigFromKubeconfig is loading your Kubeconfig into configuration struct
+func GetConfigFromKubeconfig(namespace string) (*action.Configuration, *rest.Config) {
 	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "", namespace)
+	restConfig, err := restClientGetter.ToRESTConfig()
+	if err != nil {
+		panic(err)
+	}
 	actionConfig := new(action.Configuration)
 	actionConfig.Init(restClientGetter, namespace, "secret", func(format string, v ...interface{}) {
 		fmt.Sprintf(format, v)
 	})
 
-	return actionConfig
+	return actionConfig, restConfig
 }
 
 func deployEnvironment(environment *structs.Environment, isSaved bool) error {

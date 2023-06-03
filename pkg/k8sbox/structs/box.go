@@ -1,7 +1,9 @@
 // Package structs contain every k8sbox public structs
 package structs
 
-import "helm.sh/helm/v3/pkg/release"
+import (
+	"k8s.io/apimachinery/pkg/runtime"
+)
 
 // Box is your box in a struct
 type Box struct {
@@ -19,8 +21,8 @@ type BoxService struct {
 	ProcessEnvValues   func(map[string]interface{}, string) map[string]interface{}
 	ValidateBoxes      func([]Box) error
 	FillEmptyFields    func(*Box, string) error
-	UninstallBox       func(*Box, Environment) (*release.UninstallReleaseResponse, error)
-	GetBox             func(*Box) (*release.Release, error)
+	UninstallBox       func(*Box, Environment) ([]*runtime.Object, error)
+	GetBox             func(*Box) ([]*runtime.Object, error)
 	ExpandBoxVariables func([]Box) []Box
 }
 

@@ -2,7 +2,6 @@
 package services
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -11,9 +10,13 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/engine"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/client-go/kubernetes"
 )
 
 // NewBoxService creates a new BoxService
@@ -97,68 +100,196 @@ func validateBoxes(boxes []structs.Box) error {
 }
 
 // InstallBox will deploy your box applications into your k8s cluster
-func InstallBox(box *structs.Box, environment structs.Environment) (*release.Release, error) {
-	config := GetActionConfig(box.Namespace)
-	client := action.NewInstall(config)
-	client.UseReleaseName = true
-	client.Namespace = box.Namespace
-	client.ReleaseName = box.Name
-	client.CreateNamespace = true
-	client.Replace = true
-	chart, err := loader.Load(box.TempDirectory)
-	if err != nil {
-		return nil, err
-	}
-	r, err := client.RunWithContext(context.Background(), chart, processEnvValues(chart.Values, environment.Variables))
-	if err != nil {
-		return r, err
-	}
-	utils.SaveBox(*box, environment.ID)
-	return r, nil
-}
-
-// UpgradeBox will upgrade your box applications in your k8s cluster
-func UpgradeBox(box *structs.Box, environment structs.Environment) (*release.Release, error) {
-	config := GetActionConfig(box.Namespace)
-	client := action.NewUpgrade(config)
-	client.Namespace = box.Namespace
-	client.Install = true
-	client.CleanupOnFail = true
+func InstallBox(box *structs.Box, environment structs.Environment) ([]*runtime.Object, error) {
+	var objects []*runtime.Object
+	_, restConfig := GetConfigFromKubeconfig(box.Namespace)
 	chart, err := loader.Load(box.TempDirectory)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := client.RunWithContext(context.Background(), box.Name, chart, processEnvValues(chart.Values, environment.Variables))
-	if err != nil {
-		return r, err
+	releaseOptions := chartutil.ReleaseOptions{
+		Name:      box.Name,
+		Namespace: box.Namespace,
+		Revision:  1,
+		IsInstall: true,
 	}
+
+	e := engine.New(restConfig)
+	vals, err := chartutil.ToRenderValues(chart, processEnvValues(chart.Values, environment.Variables), releaseOptions, nil)
+	if err != nil {
+		return nil, err
+	}
+	render, err := e.Render(chart, vals)
+	if err != nil {
+		return nil, err
+	}
+
+	k8sclient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+	r := utils.ConvertHelmRenderToYaml(render)
+	for _, rend := range r {
+		obj, err := utils.CreateRuntimeObject(rend)
+		if err != nil {
+			return nil, err
+		}
+
+		mapping, err := utils.CreateRestMapper(k8sclient, obj)
+		if err != nil {
+			return nil, err
+		}
+
+		restClient, err := utils.NewRestClient(*restConfig, mapping.GroupVersionKind.GroupVersion())
+		if err != nil {
+			return nil, err
+		}
+
+		// Use the REST helper to create the object in the box namespace.
+		restHelper := resource.NewHelper(restClient, mapping)
+		rtobj, err := restHelper.Create(box.Namespace, false, obj)
+		if err != nil {
+			return nil, err
+		}
+		objects = append(objects, &rtobj)
+	}
+
 	utils.SaveBox(*box, environment.ID)
-	return r, nil
+	return objects, nil
 }
 
 // UninstallBox will uninstall your box applications from your k8s cluster
-func UninstallBox(box *structs.Box, environment structs.Environment) (*release.UninstallReleaseResponse, error) {
-	config := GetActionConfig(box.Namespace)
-	client := action.NewUninstall(config)
-	r, err := client.Run(box.Name)
+func UninstallBox(box *structs.Box, environment structs.Environment) ([]*runtime.Object, error) {
+	var objects []*runtime.Object
+	_, restConfig := GetConfigFromKubeconfig(box.Namespace)
+
+	chart, err := loader.Load(box.TempDirectory)
 	if err != nil {
-		return r, err
+		return nil, err
 	}
+
+	releaseOptions := chartutil.ReleaseOptions{
+		Name:      box.Name,
+		Namespace: box.Namespace,
+		Revision:  1,
+		IsInstall: true,
+	}
+
+	e := engine.New(restConfig)
+	vals, err := chartutil.ToRenderValues(chart, processEnvValues(chart.Values, environment.Variables), releaseOptions, nil)
+	if err != nil {
+		return nil, err
+	}
+	render, err := e.Render(chart, vals)
+	if err != nil {
+		return nil, err
+	}
+
+	k8sclient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+	r := utils.ConvertHelmRenderToYaml(render)
+	for _, rend := range r {
+		obj, err := utils.CreateRuntimeObject(rend)
+		if err != nil {
+			return nil, err
+		}
+
+		mapping, err := utils.CreateRestMapper(k8sclient, obj)
+		if err != nil {
+			return nil, err
+		}
+
+		restClient, err := utils.NewRestClient(*restConfig, mapping.GroupVersionKind.GroupVersion())
+		if err != nil {
+			return nil, err
+		}
+
+		// Use the REST helper to create the object in the box namespace.
+		restHelper := resource.NewHelper(restClient, mapping)
+
+		name, err := meta.NewAccessor().Name(obj)
+		if err != nil {
+			return nil, err
+		}
+
+		rtobj, err := restHelper.Delete(box.Namespace, name)
+		if err != nil {
+			return nil, err
+		}
+		objects = append(objects, &rtobj)
+	}
+
 	err = utils.RemoveBox(*box, environment.ID)
 	if err != nil {
-		return r, err
+		return nil, err
 	}
-	return r, nil
+	return objects, nil
 }
 
 // GetBox will return a helm release from your k8s cluster
-func GetBox(box *structs.Box) (*release.Release, error) {
-	config := GetActionConfig(box.Namespace)
-	client := action.NewGet(config)
+func GetBox(box *structs.Box) ([]*runtime.Object, error) {
+	_, restConfig := GetConfigFromKubeconfig(box.Namespace)
+	var objects []*runtime.Object
+	chart, err := loader.Load(box.TempDirectory)
+	if err != nil {
+		return nil, err
+	}
 
-	r, err := client.Run(box.Name)
-	return r, err
+	releaseOptions := chartutil.ReleaseOptions{
+		Name:      box.Name,
+		Namespace: box.Namespace,
+		Revision:  1,
+		IsInstall: true,
+	}
+
+	e := engine.New(restConfig)
+	vals, err := chartutil.ToRenderValues(chart, chart.Values, releaseOptions, nil)
+	if err != nil {
+		return nil, err
+	}
+	render, err := e.Render(chart, vals)
+	if err != nil {
+		return nil, err
+	}
+
+	k8sclient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+	r := utils.ConvertHelmRenderToYaml(render)
+	for _, rend := range r {
+		obj, err := utils.CreateRuntimeObject(rend)
+		if err != nil {
+			return nil, err
+		}
+
+		mapping, err := utils.CreateRestMapper(k8sclient, obj)
+		if err != nil {
+			return nil, err
+		}
+
+		restClient, err := utils.NewRestClient(*restConfig, mapping.GroupVersionKind.GroupVersion())
+		if err != nil {
+			return nil, err
+		}
+
+		// Use the REST helper to create the object in the box namespace.
+		restHelper := resource.NewHelper(restClient, mapping)
+		name, err := meta.NewAccessor().Name(obj)
+		if err != nil {
+			return nil, err
+		}
+
+		rtobj, err := restHelper.Get(box.Namespace, name)
+		if err != nil {
+			return nil, err
+		}
+		objects = append(objects, &rtobj)
+	}
+	return objects, err
 }
 
 func expandBoxVariables(boxes []structs.Box) []structs.Box {
