@@ -3,7 +3,9 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
+	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
@@ -132,11 +134,11 @@ func GetEnvironment(id string) (*structs.Environment, error) {
 	}
 
 	for _, env := range targets {
-		if env.ID == id {
+		if env.ID == strings.TrimSpace(id) {
 			return &env, nil
 		}
 	}
-	return nil, nil
+	return nil, errors.New("Environment not found.")
 }
 
 // GetEnvironments will return all your environments from tmp folder

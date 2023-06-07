@@ -1,4 +1,4 @@
-// Package handlers is used to handle cobra commands
+// Package handlers is used to process Cobra commands
 package handlers
 
 import (
@@ -11,11 +11,12 @@ import (
 	"github.com/rodaine/table"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
 	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
+	"k8s.io/utils/strings/slices"
 )
 
 // HandleGetCommand is the k8sbox get command handler
-func HandleGetCommand(context context.Context, getType string, flags []string) {
-	if getType == "environment" {
+func HandleGetCommand(context context.Context, modelName string, flags []string) {
+	if slices.Contains(structs.GetEnvironmentAliases(), modelName) {
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 		columnFmt := color.New(color.FgYellow).SprintfFunc()
 
@@ -23,7 +24,7 @@ func HandleGetCommand(context context.Context, getType string, flags []string) {
 		tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 		environments, err := utils.GetEnvironments()
 		if err != nil {
-			fmt.Println("No environments found")
+			fmt.Println("No environments found.")
 			os.Exit(1)
 		}
 		for _, widget := range environments {
@@ -33,7 +34,7 @@ func HandleGetCommand(context context.Context, getType string, flags []string) {
 		tbl.Print()
 		return
 	}
-	fmt.Println("Invalid argument. Available types: environment")
+	fmt.Printf("An invalid argument. Available arguments: %s", strings.Join(structs.GetEnvironmentAliases(), ", "))
 	os.Exit(1)
 }
 

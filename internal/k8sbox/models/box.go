@@ -1,2 +1,2 @@
-// Package model is used as an model entrypoint
+// Package model is used as an model entry point
 package model
