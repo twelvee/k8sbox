@@ -4,7 +4,7 @@
 
 A tool that allows you to roll out your environments into your k8s cluster using templated specifications, monitor the activity of these services, as well as easily scrub the cluster of unused resources that you rolled out earlier.
 
-<img src="https://i.ibb.co/k4w9ykV/ezgif-com-video-to-gif-1.gif"><br>
+<img src="https://i.ibb.co/5K2Bhvw/ezgif-com-crop-1.gif"><br>
 
 ## Learn k8sbox
 
