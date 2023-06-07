@@ -30,32 +30,12 @@ func HandleDescribeCommand(context context.Context, modelName string, envID stri
 	fmt.Println("------------------------------")
 	fmt.Printf("Boxes: %d\r\n", len(env.Boxes))
 	for i, b := range env.Boxes {
-		fmt.Printf("Box %d:\r\n", i)
-		r, err := k8sbox.GetBoxService().GetBox(&b)
+		fmt.Printf("Box %d (%s):\r\n", i, b.Name)
+		err := k8sbox.GetBoxService().DescribeBoxApplications(&b, *env)
 		if err != nil {
 			fmt.Println("Something went wrong with the box. Unable to retrieve data.")
 			fmt.Println(err.Error())
 			continue
-		}
-		fmt.Printf("Name: %s\r\n", b.Name)
-		fmt.Printf("Namespace: %s\r\n", b.Namespace)
-		fmt.Println("------ Chart ------")
-		fmt.Printf("API Version: %s\r\n", r.Chart.Metadata.APIVersion)
-		fmt.Printf("App Version: %s\r\n", r.Chart.Metadata.AppVersion)
-		fmt.Printf("Name: %s\r\n", r.Chart.Metadata.Name)
-		fmt.Printf("Version: %s\r\n", r.Chart.Metadata.Version)
-		fmt.Println("------ Release ------")
-		fmt.Printf("Version: %d\r\n", r.Version)
-		fmt.Printf("Name: %s\r\n", r.Name)
-		fmt.Printf("Namespace: %s\r\n", r.Namespace)
-		fmt.Printf("Status: %s\r\n", r.Info.Status.String())
-		fmt.Printf("Notes: %s\r\n", r.Info.Notes)
-		fmt.Printf("First deployed: %s\r\n", r.Info.FirstDeployed)
-		fmt.Printf("Last deployed: %s\r\n", r.Info.LastDeployed)
-		fmt.Printf("Deleted: %s\r\n", r.Info.Deleted)
-		fmt.Printf("------ Labels ------")
-		for _, l := range r.Labels {
-			fmt.Printf("%s ", l)
 		}
 		fmt.Println()
 	}
