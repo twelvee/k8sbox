@@ -6,7 +6,7 @@ GOARCH?=$(shell go env GOARCH || echo amd64)
 CGO_ENABLED?=0
 
 DOCKER_IMAGE?=twelvee/${APP_NAME}
-DOCKER_TAG?=v1.1-dev
+DOCKER_TAG?=v1.2.0
 
 ifeq (, $(shell which docker))
 $(error "Binary docker not found in $(PATH)")
