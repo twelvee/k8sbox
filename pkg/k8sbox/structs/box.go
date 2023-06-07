@@ -18,12 +18,12 @@ type Box struct {
 
 // BoxService is a public BoxService
 type BoxService struct {
-	ProcessEnvValues   func(map[string]interface{}, string) map[string]interface{}
-	ValidateBoxes      func([]Box) error
-	FillEmptyFields    func(*Box, string) error
-	UninstallBox       func(*Box, Environment) ([]*runtime.Object, error)
-	GetBox             func(*Box) ([]*runtime.Object, error)
-	ExpandBoxVariables func([]Box) []Box
+	ProcessEnvValues        func(map[string]interface{}, string) map[string]interface{}
+	ValidateBoxes           func([]Box) error
+	FillEmptyFields         func(*Box, string) error
+	UninstallBox            func(*Box, Environment) ([]*runtime.Object, error)
+	DescribeBoxApplications func(*Box, Environment) error
+	ExpandBoxVariables      func([]Box) []Box
 }
 
 // Helm is helm string getter

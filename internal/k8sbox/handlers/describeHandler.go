@@ -30,14 +30,13 @@ func HandleDescribeCommand(context context.Context, modelName string, envID stri
 	fmt.Println("------------------------------")
 	fmt.Printf("Boxes: %d\r\n", len(env.Boxes))
 	for i, b := range env.Boxes {
-		fmt.Printf("Box %d:\r\n", i)
-		_, err := k8sbox.GetBoxService().GetBox(&b)
+		fmt.Printf("Box %d (%s):\r\n", i, b.Name)
+		err := k8sbox.GetBoxService().DescribeBoxApplications(&b, *env)
 		if err != nil {
 			fmt.Println("Something went wrong with the box. Unable to retrieve data.")
 			fmt.Println(err.Error())
 			continue
 		}
-		// TODO: Implement kubectl describe
 		fmt.Println()
 	}
 }
