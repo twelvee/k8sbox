@@ -34,10 +34,13 @@ func getEnvironmentFromToml(tomlFile string) (structs.Environment, error) {
 	}
 
 	data, err := os.ReadFile(tomlFile)
+	if err != nil {
+		return structs.Environment{}, err
+	}
 
 	err = toml.Unmarshal(data, &environment)
 	if err != nil {
-		panic(err)
+		return structs.Environment{}, err
 	}
 	return environment, nil
 }
