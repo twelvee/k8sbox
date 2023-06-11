@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -25,30 +26,69 @@ func NewBoxService() structs.BoxService {
 		ProcessEnvValues:        processEnvValues,
 		ValidateBoxes:           validateBoxes,
 		FillEmptyFields:         fillEmptyFields,
-		UninstallBox:            UninstallBox,
-		DescribeBoxApplications: DescribeBoxApplications,
+		UninstallBox:            uninstallBox,
+		DescribeBoxApplications: describeBoxApplications,
 		ExpandBoxVariables:      expandBoxVariables,
 	}
 }
 
-func fillEmptyFields(box *structs.Box, environmentNamespace string) error {
+func fillEmptyFields(environment structs.Environment, box *structs.Box) error {
 	if len(strings.TrimSpace(box.Namespace)) == 0 {
-		if len(strings.TrimSpace(environmentNamespace)) == 0 {
+		if len(strings.TrimSpace(environment.Namespace)) == 0 {
 			box.Namespace = strings.ToLower(strings.Join([]string{"k8srun", utils.GetShortNamespace(8)}, "-"))
 		} else {
-			box.Namespace = environmentNamespace
+			box.Namespace = environment.Namespace
 		}
 	}
 	if len(strings.TrimSpace(box.Name)) == 0 {
 		box.Name = strings.ToLower(strings.Join([]string{"k8srun", utils.GetShortNamespace(8)}, "-"))
 	}
 
+	if box.Type == structs.Helm() {
+		err := createHelmRenders(environment, box)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func createHelmRenders(environment structs.Environment, box *structs.Box) error {
+	chart, err := loader.Load(filepath.Dir(box.Chart))
+	if err != nil {
+		return err
+	}
+	releaseOptions := chartutil.ReleaseOptions{
+		Name:      box.Name,
+		Namespace: box.Namespace,
+		Revision:  1,
+		IsInstall: true,
+	}
+
+	e := engine.New(restConfig)
+	var replacedValues map[string]interface{}
+	if len(strings.TrimSpace(environment.Variables)) != 0 {
+		replacedValues = processEnvValues(chart.Values, environment.Variables)
+	}
+	vals, err := chartutil.ToRenderValues(chart, replacedValues, releaseOptions, nil)
+	if err != nil {
+		return err
+	}
+	render, err := e.Render(chart, vals)
+	if err != nil {
+		return err
+	}
+	box.HelmRender = render
 	return nil
 }
 
 func processEnvValues(values map[string]interface{}, dotenvPath string) map[string]interface{} {
 	if len(dotenvPath) > 0 {
-		godotenv.Load(dotenvPath)
+		err := godotenv.Load(dotenvPath)
+		if err != nil {
+			panic(err)
+		}
 	}
 	for k, v := range values {
 		if len(os.ExpandEnv(fmt.Sprintf("%v", v))) == 0 {
@@ -66,7 +106,7 @@ func validateBoxes(boxes []structs.Box) error {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Type is missing", index))
 		}
 
-		if len(box.Applications) == 0 {
+		if len(box.Applications) == 0 && box.Type != structs.Helm() {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Applications are missing", index))
 		}
 
@@ -86,10 +126,12 @@ func validateBoxes(boxes []structs.Box) error {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Values file can't be opened (%s)", index, box.Values))
 		}
 
-		applicationsErrors := validateApplications(box.Applications)
-		if len(applicationsErrors) > 0 {
-			for _, err := range applicationsErrors {
-				messages = append(messages, fmt.Sprintf("-> Box %d: \n\r%s", index, err))
+		if box.Type != structs.Helm() {
+			applicationsErrors := validateApplications(box.Applications)
+			if len(applicationsErrors) > 0 {
+				for _, err := range applicationsErrors {
+					messages = append(messages, fmt.Sprintf("-> Box %d: \n\r%s", index, err))
+				}
 			}
 		}
 	}
@@ -99,37 +141,10 @@ func validateBoxes(boxes []structs.Box) error {
 	return nil
 }
 
-// InstallBox will deploy your box applications into your k8s cluster
-func InstallBox(box *structs.Box, environment structs.Environment) ([]*runtime.Object, error) {
+func installBox(box *structs.Box, environment structs.Environment) ([]*runtime.Object, error) {
 	var objects []*runtime.Object
-	_, restConfig := GetConfigFromKubeconfig(box.Namespace)
-	chart, err := loader.Load(box.TempDirectory)
-	if err != nil {
-		return nil, err
-	}
 
-	releaseOptions := chartutil.ReleaseOptions{
-		Name:      box.Name,
-		Namespace: box.Namespace,
-		Revision:  1,
-		IsInstall: true,
-	}
-
-	e := engine.New(restConfig)
-	vals, err := chartutil.ToRenderValues(chart, processEnvValues(chart.Values, environment.Variables), releaseOptions, nil)
-	if err != nil {
-		return nil, err
-	}
-	render, err := e.Render(chart, vals)
-	if err != nil {
-		return nil, err
-	}
-
-	k8sclient, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-	r := utils.ConvertHelmRenderToYaml(render)
+	r := utils.ConvertHelmRenderToYaml(box.HelmRender)
 	for _, rend := range r {
 		obj, err := utils.CreateRuntimeObject(rend)
 		if err != nil {
@@ -155,42 +170,13 @@ func InstallBox(box *structs.Box, environment structs.Environment) ([]*runtime.O
 		objects = append(objects, &rtobj)
 	}
 
-	utils.SaveBox(*box, environment.ID)
 	return objects, nil
 }
 
-// UninstallBox will uninstall your box applications from your k8s cluster
-func UninstallBox(box *structs.Box, environment structs.Environment) ([]*runtime.Object, error) {
+func uninstallBox(environment structs.Environment, box structs.Box) ([]*runtime.Object, error) {
 	var objects []*runtime.Object
-	_, restConfig := GetConfigFromKubeconfig(box.Namespace)
 
-	chart, err := loader.Load(box.TempDirectory)
-	if err != nil {
-		return nil, err
-	}
-
-	releaseOptions := chartutil.ReleaseOptions{
-		Name:      box.Name,
-		Namespace: box.Namespace,
-		Revision:  1,
-		IsInstall: true,
-	}
-
-	e := engine.New(restConfig)
-	vals, err := chartutil.ToRenderValues(chart, processEnvValues(chart.Values, environment.Variables), releaseOptions, nil)
-	if err != nil {
-		return nil, err
-	}
-	render, err := e.Render(chart, vals)
-	if err != nil {
-		return nil, err
-	}
-
-	k8sclient, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-	r := utils.ConvertHelmRenderToYaml(render)
+	r := utils.ConvertHelmRenderToYaml(box.HelmRender)
 	for _, rend := range r {
 		obj, err := utils.CreateRuntimeObject(rend)
 		if err != nil {
@@ -222,43 +208,15 @@ func UninstallBox(box *structs.Box, environment structs.Environment) ([]*runtime
 		objects = append(objects, &rtobj)
 	}
 
-	err = utils.RemoveBox(*box, environment.ID)
+	err := deleteSavedBox(environment, box)
 	if err != nil {
 		return nil, err
 	}
 	return objects, nil
 }
 
-// DescrieBoxApplications will print a describe string of box applications
-func DescribeBoxApplications(box *structs.Box, environment structs.Environment) error {
-	_, restConfig := GetConfigFromKubeconfig(box.Namespace)
-	chart, err := loader.Load(box.TempDirectory)
-	if err != nil {
-		return err
-	}
-
-	releaseOptions := chartutil.ReleaseOptions{
-		Name:      box.Name,
-		Namespace: box.Namespace,
-		Revision:  1,
-		IsInstall: true,
-	}
-
-	e := engine.New(restConfig)
-	vals, err := chartutil.ToRenderValues(chart, processEnvValues(chart.Values, environment.Variables), releaseOptions, nil)
-	if err != nil {
-		return err
-	}
-	render, err := e.Render(chart, vals)
-	if err != nil {
-		return err
-	}
-
-	k8sclient, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return err
-	}
-	r := utils.ConvertHelmRenderToYaml(render)
+func describeBoxApplications(environment structs.Environment, box structs.Box) error {
+	r := utils.ConvertHelmRenderToYaml(box.HelmRender)
 	for _, rend := range r {
 		obj, err := utils.CreateRuntimeObject(rend)
 		if err != nil {
@@ -298,11 +256,13 @@ func DescribeBoxApplications(box *structs.Box, environment structs.Environment) 
 		if err != nil {
 			return err
 		}
-		err = describeFunc(k8sclient, box.Namespace, name)
-		if err != nil {
-			return err
+		if describeFunc != nil {
+			err = describeFunc(k8sclient, box.Namespace, name)
+			if err != nil {
+				return err
+			}
+			fmt.Println()
 		}
-		fmt.Println()
 	}
 	return nil
 }

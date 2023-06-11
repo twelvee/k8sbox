@@ -19,3 +19,8 @@ func GetBoxStruct() structs.Box {
 func GetApplicationStruct() structs.Application {
 	return structs.Application{}
 }
+
+// GetStorageStruct will return an storage struct
+func GetStorageStruct() structs.Storage {
+	return structs.Storage{}
+}

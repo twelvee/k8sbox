@@ -9,18 +9,13 @@ import (
 // NewDeleteCommand is delete command entry point
 func NewDeleteCommand() *cobra.Command {
 	var (
-		command  *cobra.Command
-		tomlFile string
-		id       string
+		command   *cobra.Command
+		namespace string
 
 		getExample = `
-		k8sbox delete environment -i {EnvironmentID} // will delete the environment by reference to its ID
+		k8sbox delete environment {EnvironmentID} -n test // will delete the environment by reference to its ID
 
-		k8sbox delete env -i {EnvironmentID} // will delete the environment by reference to its ID
-
-		k8sbox delete environment --file ./examples/environments/example_environment.toml // will delete the environment by reference to its toml specification
-
-		k8sbox delete env --file ./examples/environments/example_environment.toml // will delete the environment by reference to its toml specification
+		k8sbox delete env {EnvironmentID} --namespace=default // will delete the environment by reference to its ID
 		`
 	)
 	command = &cobra.Command{
@@ -28,13 +23,12 @@ func NewDeleteCommand() *cobra.Command {
 		Short:   "Delete a resource",
 		Long:    "Remove the resource from your k8s cluster. Use requires specifying the type of the resource as the first argument, as well as one of the flags indicating that the resource belongs to it.",
 		Example: getExample,
-		Args:    cobra.MinimumNArgs(1),
+		Args:    cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleDeleteCommand(command.Context(), args[0], tomlFile, id)
+			handlers.HandleDeleteCommand(command.Context(), args[0], args[1], namespace)
 			return nil
 		},
 	}
-	command.Flags().StringVarP(&id, "id", "i", "", "The ID of the resource to be deleted.")
-	command.Flags().StringVarP(&tomlFile, "file", "f", "", "Path toml file specifying the environment to be deleted.")
+	command.Flags().StringVarP(&namespace, "namespace", "n", "default", "The ID of the resource to be deleted.")
 	return command
 }

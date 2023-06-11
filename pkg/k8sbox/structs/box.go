@@ -7,22 +7,23 @@ import (
 
 // Box is your box in a struct
 type Box struct {
-	Type          string        `toml:"type"`
-	Applications  []Application `toml:"applications"`
-	Chart         string        `toml:"chart"`
-	Values        string        `toml:"values"`
-	Namespace     string        `toml:"namespace"`
-	Name          string        `toml:"name"`
-	TempDirectory string        `toml:"-"`
+	Type         string            `toml:"type"`
+	Applications []Application     `toml:"applications"`
+	Chart        string            `toml:"chart"`
+	Values       string            `toml:"values"`
+	Namespace    string            `toml:"namespace"`
+	Name         string            `toml:"name"`
+	HelmRender   map[string]string `toml:"-"`
 }
 
 // BoxService is a public BoxService
 type BoxService struct {
+	InstallBox              func(*Box, Environment) ([]*runtime.Object, error)
 	ProcessEnvValues        func(map[string]interface{}, string) map[string]interface{}
 	ValidateBoxes           func([]Box) error
-	FillEmptyFields         func(*Box, string) error
-	UninstallBox            func(*Box, Environment) ([]*runtime.Object, error)
-	DescribeBoxApplications func(*Box, Environment) error
+	FillEmptyFields         func(Environment, *Box) error
+	UninstallBox            func(Environment, Box) ([]*runtime.Object, error)
+	DescribeBoxApplications func(Environment, Box) error
 	ExpandBoxVariables      func([]Box) []Box
 }
 

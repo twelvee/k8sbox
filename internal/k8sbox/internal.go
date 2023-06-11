@@ -22,6 +22,11 @@ func GetApplicationService() structs.ApplicationService {
 	return services.NewApplicationService()
 }
 
+// GetStorageService will create and return a new StorageService
+func GetStorageService() structs.StorageService {
+	return services.NewStorageService()
+}
+
 // GetTomlFormatter will create and return a new TomlFormatter
 func GetTomlFormatter() formatters.TomlFormatter {
 	return formatters.NewTomlFormatter()
