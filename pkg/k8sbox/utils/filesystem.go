@@ -14,7 +14,7 @@ import (
 const saveDir = "/tmp/k8sbox_saves"
 const savesFile = "/tmp/k8sbox_saves/save"
 
-func ensureSaveFileAvailable() error {
+func EnsureSaveFileAvailable() error {
 	// TODO: check useless calls of this method
 	_, err := os.Stat(savesFile)
 	if os.IsNotExist(err) {
@@ -35,7 +35,7 @@ func ensureSaveFileAvailable() error {
 
 // IsBoxSaved check if the box is already saved or not
 func IsBoxSaved(environmentID string, sbox structs.Box) (bool, error) {
-	err := ensureSaveFileAvailable()
+	err := EnsureSaveFileAvailable()
 	if err != nil {
 		return false, err
 	}
@@ -64,7 +64,7 @@ func IsBoxSaved(environmentID string, sbox structs.Box) (bool, error) {
 
 // IsEnvironmentSaved check if the environment is already saved or not
 func IsEnvironmentSaved(id string) (bool, error) {
-	err := ensureSaveFileAvailable()
+	err := EnsureSaveFileAvailable()
 	if err != nil {
 		return false, err
 	}
@@ -88,7 +88,7 @@ func IsEnvironmentSaved(id string) (bool, error) {
 
 // SaveEnvironment will save your environment to tmp folder
 func SaveEnvironment(environment structs.Environment) error {
-	err := ensureSaveFileAvailable()
+	err := EnsureSaveFileAvailable()
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func SaveEnvironment(environment structs.Environment) error {
 
 // GetEnvironment will return your environment from tmp folder
 func GetEnvironment(id string) (*structs.Environment, error) {
-	err := ensureSaveFileAvailable()
+	err := EnsureSaveFileAvailable()
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func GetEnvironment(id string) (*structs.Environment, error) {
 
 // GetEnvironments will return all your environments from tmp folder
 func GetEnvironments() ([]structs.Environment, error) {
-	err := ensureSaveFileAvailable()
+	err := EnsureSaveFileAvailable()
 	if err != nil {
 		return nil, err
 	}
@@ -161,8 +161,8 @@ func GetEnvironments() ([]structs.Environment, error) {
 }
 
 // GetBox will return your box from tmp folder
-func GetBox(environmentID string, boxName string, boxNamespace string, boxTempDirectory string) (*structs.Box, error) {
-	err := ensureSaveFileAvailable()
+func GetBox(environmentID string, boxName string, boxNamespace string) (*structs.Box, error) {
+	err := EnsureSaveFileAvailable()
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func GetBox(environmentID string, boxName string, boxNamespace string, boxTempDi
 	for _, env := range targets {
 		if env.ID == environmentID {
 			for _, box := range env.Boxes {
-				if box.Name == boxName && box.Namespace == boxNamespace && box.TempDirectory == boxTempDirectory {
+				if box.Name == boxName && box.Namespace == boxNamespace {
 					return &box, nil
 				}
 			}
@@ -191,7 +191,7 @@ func GetBox(environmentID string, boxName string, boxNamespace string, boxTempDi
 
 // SaveBox will save your box to tmp folder
 func SaveBox(box structs.Box, environmentID string) error {
-	err := ensureSaveFileAvailable()
+	err := EnsureSaveFileAvailable()
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func SaveBox(box structs.Box, environmentID string) error {
 
 // RemoveBox will remove your box from tmp folder
 func RemoveBox(box structs.Box, environmentID string) error {
-	err := ensureSaveFileAvailable()
+	err := EnsureSaveFileAvailable()
 	if err != nil {
 		return err
 	}
@@ -254,7 +254,6 @@ func RemoveBox(box structs.Box, environmentID string) error {
 				if cmp.Equal(box, savedBox) {
 					targets[t].Boxes[i] = targets[t].Boxes[len(env.Boxes)-1]
 					targets[t].Boxes = targets[t].Boxes[:len(env.Boxes)-1]
-					err := os.RemoveAll(box.TempDirectory)
 					if err != nil {
 						return err
 					}
@@ -275,7 +274,7 @@ func RemoveBox(box structs.Box, environmentID string) error {
 
 // RemoveEnvironment will remove your environment from tmp folder
 func RemoveEnvironment(id string) error {
-	err := ensureSaveFileAvailable()
+	err := EnsureSaveFileAvailable()
 	if err != nil {
 		return err
 	}
@@ -296,7 +295,6 @@ func RemoveEnvironment(id string) error {
 		if env.ID == id {
 			targets[i] = targets[len(targets)-1]
 			targets = targets[:len(targets)-1]
-			err = os.RemoveAll(env.TempDirectory)
 			if err != nil {
 				return err
 			}

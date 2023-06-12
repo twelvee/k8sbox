@@ -13,25 +13,21 @@ import (
 )
 
 // HandleDeleteCommand is the k8sbox delete command handler
-func HandleDeleteCommand(context context.Context, modelName string, tomlFile string, environmentID string) {
+func HandleDeleteCommand(context context.Context, modelName string, environmentID string, namespace string) {
 	if !slices.Contains(structs.GetEnvironmentAliases(), modelName) {
 		fmt.Printf("An invalid argument. Available arguments: %s\r\n", strings.Join(structs.GetEnvironmentAliases(), ", "))
 		os.Exit(1)
 	}
-	if len(strings.TrimSpace(tomlFile)) != 0 {
-		err := model.DeleteEnvironmentByTomlFile(tomlFile)
-		if err != nil {
-			fmt.Println("Failed to delete environment.", err)
-		}
+	if len(strings.TrimSpace(environmentID)) == 0 {
+		fmt.Println("The resource could not be deleted. None of the flags pointing to the resource are present.")
 		os.Exit(1)
 	}
-	if len(strings.TrimSpace(environmentID)) != 0 {
-		err := model.DeleteEnvironmentByID(environmentID)
-		if err != nil {
-			fmt.Println("Failed to delete environment.", err)
-		}
-		os.Exit(1)
+
+	KuberExecutable(context, namespace)
+
+	err := model.DeleteEnvironmentByID(namespace, environmentID)
+	if err != nil {
+		fmt.Println("Failed to delete environment.", err)
 	}
-	fmt.Println("The resource could not be deleted. None of the flags pointing to the resource are present.")
 	os.Exit(1)
 }

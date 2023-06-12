@@ -2,27 +2,29 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/twelvee/k8sbox/pkg/k8sbox/structs"
-	"github.com/twelvee/k8sbox/pkg/k8sbox/utils"
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/kube"
+	v1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 // NewEnvironmentService creates a new EnvironmentService
 func NewEnvironmentService() structs.EnvironmentService {
 	return structs.EnvironmentService{
-		DeployEnvironment:         deployEnvironment,
-		DeleteEnvironment:         deleteEnvironment,
-		CreateTempDeployDirectory: createTempDeployDirectory,
-		ValidateEnvironment:       validateEnvironment,
-		ExpandVariables:           expandVariables,
+		DeployEnvironment:          deployEnvironment,
+		DeleteEnvironment:          deleteEnvironment,
+		ValidateEnvironment:        validateEnvironment,
+		ExpandVariables:            expandVariables,
+		PrepareToWorkWithNamespace: prepareToWorkWithNamespace,
 	}
 }
 
@@ -34,126 +36,68 @@ func expandVariables(environment *structs.Environment) {
 }
 
 func deleteEnvironment(environment *structs.Environment) error {
-	err := utils.RemoveEnvironment(environment.ID)
+	for _, box := range environment.Boxes {
+		_, err := uninstallBox(*environment, box)
+		if err != nil {
+			return err
+		}
+	}
+	err := deleteSavedEnvironment(*environment)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+var k8sclient *kubernetes.Clientset
+var restConfig *rest.Config
+
 // GetConfigFromKubeconfig is loading your Kubeconfig into configuration struct
-func GetConfigFromKubeconfig(namespace string) (*action.Configuration, *rest.Config) {
+func GetConfigFromKubeconfig(namespace string) *rest.Config {
 	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "", namespace)
-	restConfig, err := restClientGetter.ToRESTConfig()
+	rc, err := restClientGetter.ToRESTConfig()
 	if err != nil {
 		panic(err)
 	}
-	actionConfig := new(action.Configuration)
-	actionConfig.Init(restClientGetter, namespace, "secret", func(format string, v ...interface{}) {
-		fmt.Sprintf(format, v)
-	})
 
-	return actionConfig, restConfig
+	return rc
 }
 
-func deployEnvironment(environment *structs.Environment, isSaved bool) error {
-	if !isSaved {
-		utils.SaveEnvironment(*environment)
+func prepareToWorkWithNamespace(namespace string) error {
+	restConfig = GetConfigFromKubeconfig(namespace)
+	cl, err := kubernetes.NewForConfig(restConfig)
+	k8sclient = cl
+	if err != nil {
+		return err
 	}
+	return createNamespaceIfNotExists(namespace)
+}
 
+func createNamespaceIfNotExists(namespace string) error {
+	_, err := k8sclient.CoreV1().Namespaces().Create(context.Background(), &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace,
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Namespace",
+			APIVersion: "v1",
+		},
+	}, metav1.CreateOptions{})
+	if k8serrors.IsAlreadyExists(err) {
+		return nil
+	}
+	return err
+}
+
+func deployEnvironment(environment *structs.Environment) error {
+	saveEnvironment(*environment)
 	for _, box := range environment.Boxes {
-		_, err := InstallBox(&box, *environment)
+		_, err := installBox(&box, *environment)
 		if err != nil {
 			return err
 		}
 	}
 
-	return nil
-}
-
-func createTempDeployDirectory(environment *structs.Environment, isSavedAlready bool) (string, error) {
-	if isSavedAlready {
-		env, err := utils.GetEnvironment(environment.ID)
-		if err != nil {
-			return "", err
-		}
-		environment.TempDirectory = env.TempDirectory
-		err = moveEnvironmentFilesToTempDirectory(environment)
-		if err != nil {
-			return "", err
-		}
-		return env.TempDirectory, nil
-	}
-	tempFolder, err := utils.CreateTempFolder(utils.GetShortID(8))
-	if err != nil {
-		return "", err
-	}
-	environment.TempDirectory = tempFolder
-	err = moveEnvironmentFilesToTempDirectory(environment)
-	if err != nil {
-		return "", err
-	}
-
-	return tempFolder, nil
-}
-
-func moveEnvironmentFilesToTempDirectory(environment *structs.Environment) error {
-	envVariablesContent, err := ioutil.ReadFile(environment.Variables)
-	if err != nil {
-		return err
-	}
-
-	environment.Variables = strings.Join([]string{environment.TempDirectory, ".env"}, "/")
-	err = ioutil.WriteFile(environment.Variables, envVariablesContent, 0644)
-	if err != nil {
-		return err
-	}
-	for bi, box := range environment.Boxes {
-		saved, err := utils.IsBoxSaved(environment.ID, box)
-		if err != nil {
-			return err
-		}
-		if saved {
-			return nil
-		}
-
-		environment.Boxes[bi].TempDirectory = strings.Join([]string{environment.TempDirectory, utils.GetShortID(8)}, "/")
-		os.Mkdir(environment.Boxes[bi].TempDirectory, 0750)
-		boxChartContent, err := ioutil.ReadFile(environment.Boxes[bi].Chart)
-		if err != nil {
-			return err
-		}
-
-		err = ioutil.WriteFile(strings.Join([]string{environment.Boxes[bi].TempDirectory, "Chart.yaml"}, "/"), boxChartContent, 0644)
-		if err != nil {
-			return err
-		}
-
-		boxValuesContent, err := ioutil.ReadFile(environment.Boxes[bi].Values)
-		if err != nil {
-			return err
-		}
-
-		err = ioutil.WriteFile(strings.Join([]string{environment.Boxes[bi].TempDirectory, "values.yaml"}, "/"), boxValuesContent, 0644)
-		if err != nil {
-			return err
-		}
-
-		for ai := range environment.Boxes[bi].Applications {
-			environment.Boxes[bi].Applications[ai].TempDirectory = strings.Join([]string{environment.Boxes[bi].TempDirectory, "templates"}, "/")
-			os.Mkdir(environment.Boxes[bi].Applications[ai].TempDirectory, 0750)
-
-			applicationContent, err := ioutil.ReadFile(environment.Boxes[bi].Applications[ai].Chart)
-			if err != nil {
-				return err
-			}
-
-			err = ioutil.WriteFile(strings.Join([]string{environment.Boxes[bi].Applications[ai].TempDirectory, "/", utils.GetShortID(6), ".yaml"}, ""), applicationContent, 0644)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
 

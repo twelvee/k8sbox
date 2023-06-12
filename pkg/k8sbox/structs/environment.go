@@ -7,7 +7,6 @@ type Environment struct {
 	ID               string            `toml:"id"`
 	Namespace        string            `toml:"namespace"`
 	Boxes            []Box             `toml:"boxes"`
-	TempDirectory    string            `toml:"-"`
 	Variables        string            `toml:"variables"`
 	LoadBoxesFrom    string            `toml:"load_boxes_from"`
 	LoadBoxesHeaders map[string]Header `toml:"load_boxes_headers"`
@@ -15,11 +14,11 @@ type Environment struct {
 
 // EnvironmentService is a public EnvironmentService
 type EnvironmentService struct {
-	DeployEnvironment         func(*Environment, bool) error
-	DeleteEnvironment         func(*Environment) error
-	CreateTempDeployDirectory func(*Environment, bool) (string, error)
-	ValidateEnvironment       func(*Environment) error
-	ExpandVariables           func(*Environment)
+	DeployEnvironment          func(*Environment) error
+	DeleteEnvironment          func(*Environment) error
+	ValidateEnvironment        func(*Environment) error
+	ExpandVariables            func(*Environment)
+	PrepareToWorkWithNamespace func(namespace string) error
 }
 
 // GetEnvironmentAliases return a slice of environment model name aliases
