@@ -32,7 +32,7 @@ https://hub.docker.com/r/twelvee/k8sbox/tags
 2. be more flexible for more flexible deployment
 3. Automatic resource deletion by timer
 4. Obtain specifications from git repositories (including private ones)
-5. Marketplace of ready-made boxes
+5. UI interface + REST API
 ..as well as many useful and easy-to-use features
 
 ## License
