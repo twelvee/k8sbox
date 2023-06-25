@@ -233,7 +233,6 @@ func describeIngress(k8sclient *kubernetes.Clientset, namespace string, name str
 	}
 	var result []string
 	result = append(result, fmt.Sprintf("Ingres %s:", i.Name))
-	result = append(result, fmt.Sprintf("Ingress class name: %s", *i.Spec.IngressClassName))
 	result = append(result, "Rules: ")
 	for _, rules := range i.Spec.Rules {
 		result = append(result, fmt.Sprintf("Host: %s", rules.Host))

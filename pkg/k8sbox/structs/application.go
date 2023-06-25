@@ -7,9 +7,8 @@ import (
 
 // Application is your box application in a struct
 type Application struct {
-	Name          string `toml:"name"`
-	Chart         string `toml:"chart"`
-	TempDirectory string `toml:"-"`
+	Name  string `toml:"name"`
+	Chart string `toml:"chart"`
 }
 
 // ApplicationService is a public ApplicationService

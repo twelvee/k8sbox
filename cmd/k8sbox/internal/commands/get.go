@@ -9,8 +9,8 @@ import (
 // NewGetCommand is get command entry point
 func NewGetCommand() *cobra.Command {
 	var (
-		command *cobra.Command
-		flags   []string
+		command   *cobra.Command
+		namespace string
 
 		getExample = `
 		k8sbox get environments // get a list of saved environments
@@ -27,9 +27,11 @@ func NewGetCommand() *cobra.Command {
 		Example: getExample,
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleGetCommand(command.Context(), args[0], flags)
+			handlers.HandleGetCommand(command.Context(), args[0], namespace)
 			return nil
 		},
 	}
+	command.Flags().StringVarP(&namespace, "namespace", "n", "", "The namespace of the resource to be listed.")
+	command.MarkFlagRequired("namespace")
 	return command
 }
