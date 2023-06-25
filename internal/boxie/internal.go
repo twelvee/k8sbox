@@ -31,3 +31,8 @@ func GetStorageService() structs.StorageService {
 func GetTomlFormatter() formatters.TomlFormatter {
 	return formatters.NewTomlFormatter()
 }
+
+// GetJsonFormatter will create and return a new JsonFormatter
+func GetJsonFormatter() formatters.JsonFormatter {
+	return formatters.NewJsonFormatter()
+}

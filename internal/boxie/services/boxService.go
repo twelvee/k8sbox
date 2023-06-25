@@ -106,10 +106,6 @@ func validateBoxes(boxes []structs.Box) error {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Type is missing", index))
 		}
 
-		if len(box.Applications) == 0 && box.Type != structs.Helm() {
-			messages = append(messages, fmt.Sprintf("-> Box %d: Applications are missing", index))
-		}
-
 		if len(strings.TrimSpace(box.Chart)) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Chart is missing", index))
 		}

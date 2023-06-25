@@ -15,6 +15,7 @@ import (
 type TomlFormatter struct {
 	GetEnvironmentFromToml func(string) (structs.Environment, error)
 	GetEnvironmentViaHTTP  func(string, map[string]structs.Header) (structs.Environment, error)
+	GetBoxFromToml         func(string) (structs.Box, error)
 }
 
 // NewTomlFormatter creates a new Tomlformatter struct
@@ -22,6 +23,7 @@ func NewTomlFormatter() TomlFormatter {
 	return TomlFormatter{
 		GetEnvironmentFromToml: getEnvironmentFromToml,
 		GetEnvironmentViaHTTP:  getEnvironmentViaHTTP,
+		GetBoxFromToml:         getBoxFromToml,
 	}
 }
 
@@ -73,4 +75,23 @@ func getEnvironmentViaHTTP(url string, headers map[string]structs.Header) (struc
 	}
 
 	return environment, nil
+}
+
+func getBoxFromToml(filepath string) (structs.Box, error) {
+	var box structs.Box
+	_, err := os.Stat(filepath)
+	if err != nil {
+		return structs.Box{}, fmt.Errorf("File %s not found", filepath)
+	}
+
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return structs.Box{}, err
+	}
+
+	err = toml.Unmarshal(data, &box)
+	if err != nil {
+		return structs.Box{}, err
+	}
+	return box, nil
 }
