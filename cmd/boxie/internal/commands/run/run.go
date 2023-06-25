@@ -3,7 +3,7 @@ package run
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/twelvee/boxie/internal/boxie/handlers"
+	"github.com/twelvee/boxie/internal/boxie/handlers/run"
 )
 
 // NewRunCommand is run command entry point
@@ -18,7 +18,7 @@ func NewRunCommand() *cobra.Command {
 		Long:    "Run the environment with the toml specification.",
 		Example: getExample(),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleRunCommand(command.Context(), tomlFile)
+			run.HandleRunCommand(command.Context(), tomlFile)
 			return nil
 		},
 	}

@@ -1,5 +1,5 @@
-// Package handlers is used to process Cobra commands
-package handlers
+// Package run is used to process run command
+package run
 
 import (
 	"context"

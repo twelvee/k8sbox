@@ -1,5 +1,5 @@
-// Package handlers is used to process Cobra commands
-package handlers
+// Package get is used to process get commands
+package get
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/twelvee/boxie/internal/boxie"
+	"github.com/twelvee/boxie/internal/boxie/handlers"
 	"github.com/twelvee/boxie/pkg/boxie/structs"
 	"k8s.io/utils/strings/slices"
 )
@@ -21,7 +22,7 @@ func HandleGetCommand(context context.Context, modelName string, namespace strin
 		os.Exit(1)
 	}
 
-	KuberExecutable(context, namespace)
+	handlers.KuberExecutable(context, namespace)
 
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()

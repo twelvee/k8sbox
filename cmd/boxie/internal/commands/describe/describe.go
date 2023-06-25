@@ -3,7 +3,7 @@ package describe
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/twelvee/boxie/internal/boxie/handlers"
+	"github.com/twelvee/boxie/internal/boxie/handlers/describe"
 )
 
 // NewDescribeCommand is describe command entry point
@@ -19,7 +19,7 @@ func NewDescribeCommand() *cobra.Command {
 		Example: getExample(),
 		Args:    cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			handlers.HandleDescribeCommand(command.Context(), args[0], args[1], namespace)
+			describe.HandleDescribeCommand(command.Context(), args[0], args[1], namespace)
 			return nil
 		},
 	}

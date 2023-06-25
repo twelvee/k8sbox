@@ -1,5 +1,5 @@
-// Package handlers is used to process Cobra commands
-package handlers
+// Package delete is used to process delete commands
+package delete
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/twelvee/boxie/internal/boxie/handlers"
 	model "github.com/twelvee/boxie/internal/boxie/models"
 	"github.com/twelvee/boxie/pkg/boxie/structs"
 	"k8s.io/utils/strings/slices"
@@ -23,7 +24,7 @@ func HandleDeleteCommand(context context.Context, modelName string, environmentI
 		os.Exit(1)
 	}
 
-	KuberExecutable(context, namespace)
+	handlers.KuberExecutable(context, namespace)
 
 	err := model.DeleteEnvironmentByID(namespace, environmentID)
 	if err != nil {

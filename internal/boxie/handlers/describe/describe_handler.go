@@ -1,5 +1,5 @@
-// Package handlers is used to process Cobra commands
-package handlers
+// Package describe is used to process describe commands
+package describe
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/twelvee/boxie/internal/boxie"
+	"github.com/twelvee/boxie/internal/boxie/handlers"
 	"github.com/twelvee/boxie/pkg/boxie/structs"
 	"k8s.io/utils/strings/slices"
 )
@@ -18,7 +19,7 @@ func HandleDescribeCommand(context context.Context, modelName string, envID stri
 		fmt.Printf("An invalid argument. Available arguments: %s\r\n", strings.Join(structs.GetEnvironmentAliases(), ", "))
 		os.Exit(1)
 	}
-	KuberExecutable(context, namespace)
+	handlers.KuberExecutable(context, namespace)
 	s := boxie.GetStorageService()
 	env, err := s.GetEnvironment(namespace, envID)
 	if err != nil {

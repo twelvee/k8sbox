@@ -1,3 +1,4 @@
+// Package run is an entry point and help tools for run commands
 package run
 
 func getExample() string {

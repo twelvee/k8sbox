@@ -1,3 +1,4 @@
+// Package delete is an entry point and help tools for delete commands
 package delete
 
 func getExample() string {

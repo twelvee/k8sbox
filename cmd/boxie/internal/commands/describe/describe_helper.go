@@ -1,3 +1,4 @@
+// Package describe is an entry point and help tools for describe command
 package describe
 
 func getExample() string {
