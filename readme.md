@@ -1,5 +1,5 @@
 ## About boxie
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/15d825c17a4c4497ba777206c18c5e3d)](https://app.codacy.com/gh/twelvee/k8sbox/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/15d825c17a4c4497ba777206c18c5e3d)](https://app.codacy.com/gh/twelvee/boxie/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 <img src="https://img.shields.io/docker/v/twelvee/boxie"> <br>
 
 A tool that allows you to roll out your environments into your k8s cluster using templated specifications, monitor the activity of these services, as well as easily scrub the cluster of unused resources that you rolled out earlier.

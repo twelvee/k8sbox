@@ -1,4 +1,4 @@
-override APP_NAME=k8sbox
+override APP_NAME=boxie
 override GO_VERSION=1.19
 
 GOOS?=$(shell go env GOOS || echo linux)
