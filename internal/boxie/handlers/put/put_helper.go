@@ -1,5 +1,5 @@
-// Package create is used to process create commands
-package create
+// Package put is used to process put commands
+package put
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// CreateArguments is create arguments request as a struct
-type CreateArguments struct {
+// PutArguments is put arguments request as a struct
+type PutArguments struct {
 	TomlFile       string
 	JsonSpec       string
 	BoxType        string
@@ -19,7 +19,7 @@ type CreateArguments struct {
 	Namespace      string
 }
 
-func parseBoxFromRequest(arguments CreateArguments) (structs.Box, error) {
+func parseBoxFromRequest(arguments PutArguments) (structs.Box, error) {
 	if len(strings.TrimSpace(arguments.TomlFile)) != 0 {
 		box, err := boxie.GetTomlFormatter().GetBoxFromToml(arguments.TomlFile)
 		if err != nil {

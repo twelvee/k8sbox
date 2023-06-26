@@ -10,3 +10,11 @@ func getExample() string {
 	boxie get env // get a list of saved environments
 	`
 }
+
+func getShelfExample() string {
+	return `
+	boxie shelf get boxes
+
+	boxie shelf get envs
+	`
+}

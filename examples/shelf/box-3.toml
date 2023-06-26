@@ -1,0 +1,4 @@
+type = "helm"
+chart = "${PWD}/examples/environments/ingress/Chart.yaml"
+values = "${PWD}/examples/environments/ingress/values.yaml"
+name = "third-box"

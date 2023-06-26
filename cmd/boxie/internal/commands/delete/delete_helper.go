@@ -8,3 +8,11 @@ func getExample() string {
 	boxie delete env {EnvironmentID} --namespace=default // will delete the environment by reference to its ID
 	`
 }
+
+func getShelfExample() string {
+	return `
+	boxie shelf delete box first-box
+
+	boxie shelf delete box my-box
+	`
+}

@@ -14,6 +14,7 @@ type Box struct {
 	Namespace    string            `toml:"namespace"`
 	Name         string            `toml:"name"`
 	HelmRender   map[string]string `toml:"-"`
+	Created      string            `toml:"-"`
 }
 
 // BoxService is a public BoxService

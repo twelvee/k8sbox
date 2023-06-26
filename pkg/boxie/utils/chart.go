@@ -25,7 +25,7 @@ func NewRestClient(restConfig rest.Config, gv schema.GroupVersion) (rest.Interfa
 	return rest.RESTClientFor(&restConfig)
 }
 
-// CreateRuntimeObject will create k8s runtime object from helm chart (template)
+// CreateRuntimeObject will put k8s runtime object from helm chart (template)
 func CreateRuntimeObject(yaml string) (runtime.Object, error) {
 	obj, _, err := scheme.Codecs.UniversalDeserializer().Decode([]byte(yaml), nil, nil)
 	if err != nil {
@@ -35,7 +35,7 @@ func CreateRuntimeObject(yaml string) (runtime.Object, error) {
 	return obj, nil
 }
 
-// CreateRestMapper will create a REST mapper that tracks information about the available resources in the cluster.
+// CreateRestMapper will put a REST mapper that tracks information about the available resources in the cluster.
 func CreateRestMapper(k8sclientSet *kubernetes.Clientset, obj runtime.Object) (*meta.RESTMapping, error) {
 	groupResources, err := restmapper.GetAPIGroupResources(k8sclientSet.Discovery())
 	if err != nil {

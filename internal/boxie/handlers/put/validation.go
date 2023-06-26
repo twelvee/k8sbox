@@ -1,5 +1,5 @@
-// Package create is used to process create commands
-package create
+// Package put is used to process put commands
+package put
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func validateRequest(resourceType string, arguments CreateArguments) error {
+func validateRequest(resourceType string, arguments PutArguments) error {
 	if !slices.Contains(structs.GetBoxAliaces(), resourceType) {
 		return fmt.Errorf("An invalid argument. Available arguments: %s\r\n", strings.Join(structs.GetBoxAliaces(), ", "))
 	}

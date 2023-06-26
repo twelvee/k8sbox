@@ -15,7 +15,7 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
-// HandleGetCommand is the k8boxiesbox get command handler
+// HandleGetCommand is the boxie get command handler
 func HandleGetCommand(context context.Context, modelName string, namespace string) {
 	if !slices.Contains(structs.GetEnvironmentAliases(), modelName) {
 		fmt.Printf("An invalid argument. Available arguments: %s", strings.Join(structs.GetEnvironmentAliases(), ", "))

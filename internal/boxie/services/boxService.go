@@ -157,7 +157,7 @@ func installBox(box *structs.Box, environment structs.Environment) ([]*runtime.O
 			return nil, err
 		}
 
-		// Use the REST helper to create the object in the box namespace.
+		// Use the REST helper to put the object in the box namespace.
 		restHelper := resource.NewHelper(restClient, mapping)
 		rtobj, err := restHelper.Create(box.Namespace, false, obj)
 		if err != nil {
@@ -189,7 +189,7 @@ func uninstallBox(environment structs.Environment, box structs.Box) ([]*runtime.
 			return nil, err
 		}
 
-		// Use the REST helper to create the object in the box namespace.
+		// Use the REST helper to put the object in the box namespace.
 		restHelper := resource.NewHelper(restClient, mapping)
 
 		name, err := meta.NewAccessor().Name(obj)
