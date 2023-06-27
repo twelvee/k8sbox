@@ -45,20 +45,6 @@ func getEnvironmentFromToml(tomlFile string) (structs.Environment, error) {
 		return structs.Environment{}, err
 	}
 
-	for i, _ := range environment.Boxes {
-		data, err = os.ReadFile(os.ExpandEnv(environment.Boxes[i].Chart))
-		if err != nil {
-			return structs.Environment{}, err
-		}
-		environment.Boxes[i].Chart = string(data)
-
-		data, err = os.ReadFile(os.ExpandEnv(environment.Boxes[i].Values))
-		if err != nil {
-			return structs.Environment{}, err
-		}
-		environment.Boxes[i].Values = string(data)
-	}
-
 	return environment, nil
 }
 
@@ -88,21 +74,29 @@ func getEnvironmentViaHTTP(url string, headers map[string]structs.Header) (struc
 	if err != nil {
 		return environment, err
 	}
+	/*
+		for i, _ := range environment.Boxes {
+			data, err := os.ReadFile(os.ExpandEnv(environment.Boxes[i].Chart))
+			if err != nil {
+				return structs.Environment{}, err
+			}
+			environment.Boxes[i].Chart = string(data)
 
-	for i, _ := range environment.Boxes {
-		data, err := os.ReadFile(os.ExpandEnv(environment.Boxes[i].Chart))
-		if err != nil {
-			return structs.Environment{}, err
+			data, err = os.ReadFile(os.ExpandEnv(environment.Boxes[i].Values))
+			if err != nil {
+				return structs.Environment{}, err
+			}
+			environment.Boxes[i].Values = string(data)
+
+			for j, _ := range environment.Boxes[i].Applications {
+				data, err = os.ReadFile(os.ExpandEnv(environment.Boxes[i].Applications[j].Chart))
+				if err != nil {
+					return structs.Environment{}, err
+				}
+				environment.Boxes[i].Applications[j].Chart = string(data)
+			}
 		}
-		environment.Boxes[i].Chart = string(data)
-
-		data, err = os.ReadFile(os.ExpandEnv(environment.Boxes[i].Values))
-		if err != nil {
-			return structs.Environment{}, err
-		}
-		environment.Boxes[i].Values = string(data)
-	}
-
+	*/
 	return environment, nil
 }
 
@@ -122,18 +116,18 @@ func getBoxFromToml(filepath string) (structs.Box, error) {
 	if err != nil {
 		return structs.Box{}, err
 	}
+	/*
+		data, err = os.ReadFile(os.ExpandEnv(box.Chart))
+		if err != nil {
+			return structs.Box{}, err
+		}
+		box.Chart = string(data)
 
-	data, err = os.ReadFile(os.ExpandEnv(box.Chart))
-	if err != nil {
-		return structs.Box{}, err
-	}
-	box.Chart = string(data)
-
-	data, err = os.ReadFile(os.ExpandEnv(box.Values))
-	if err != nil {
-		return structs.Box{}, err
-	}
-	box.Values = string(data)
+		data, err = os.ReadFile(os.ExpandEnv(box.Values))
+		if err != nil {
+			return structs.Box{}, err
+		}
+		box.Values = string(data)*/
 
 	return box, nil
 }

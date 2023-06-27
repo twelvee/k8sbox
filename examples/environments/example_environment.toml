@@ -1,14 +1,23 @@
-id = "${TEST_ENV}" # It can be your ${CI_SLUG} for example
+id = "ttt" # It can be your ${CI_SLUG} for example
 name = "test environment"
 namespace = "test"
 variables = "${PWD}/examples/environments/.env"
 
-load_boxes_from = "https://raw.githubusercontent.com/twelvee/boxie/load-boxes-via-http/examples/environments/example_boxes.toml"
-[load_boxes_headers]
-    [load_boxes_headers.0]
-    name = "Content-Type"
-    value = "application/toml"
-    [load_boxes_headers.1]
-    name = "Accept"
-    value = "application/toml"
 
+[[boxes]]
+type = "helm"
+chart = "${PWD}/examples/environments/box1"
+values = "${PWD}/examples/environments/box1/Values.yaml"
+name = "first-box-2"
+
+[[boxes]]
+type = "helm"
+chart = "${PWD}/examples/environments/box2"
+values = "${PWD}/examples/environments/box2/Values.yaml"
+name = "second-box-2"
+
+[[boxes]]
+type = "helm"
+chart = "${PWD}/examples/environments/ingress"
+name = "third-box"
+values = "${PWD}/examples/environments/ingress/Values.yaml"

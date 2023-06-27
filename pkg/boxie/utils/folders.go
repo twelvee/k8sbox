@@ -8,7 +8,7 @@ import (
 
 // CreateTempFolder creates a temp directory for an environment
 func CreateTempFolder(name string) (string, error) {
-	name, err := ioutil.TempDir("/tmp", strings.Join([]string{"k8srun", name}, ""))
+	name, err := ioutil.TempDir("/tmp", strings.Join([]string{"boxie", name}, ""))
 	if err != nil {
 		return "", err
 	}

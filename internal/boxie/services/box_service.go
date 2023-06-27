@@ -4,14 +4,13 @@ package services
 import (
 	"errors"
 	"fmt"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/twelvee/boxie/pkg/boxie/structs"
 	"github.com/twelvee/boxie/pkg/boxie/utils"
-	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -35,13 +34,13 @@ func NewBoxService() structs.BoxService {
 func fillEmptyFields(environment structs.Environment, box *structs.Box) error {
 	if len(strings.TrimSpace(box.Namespace)) == 0 {
 		if len(strings.TrimSpace(environment.Namespace)) == 0 {
-			box.Namespace = strings.ToLower(strings.Join([]string{"k8srun", utils.GetShortNamespace(8)}, "-"))
+			box.Namespace = strings.ToLower(strings.Join([]string{"boxie", utils.GetShortNamespace(8)}, "-"))
 		} else {
 			box.Namespace = environment.Namespace
 		}
 	}
 	if len(strings.TrimSpace(box.Name)) == 0 {
-		box.Name = strings.ToLower(strings.Join([]string{"k8srun", utils.GetShortNamespace(8)}, "-"))
+		box.Name = strings.ToLower(strings.Join([]string{"boxie", utils.GetShortNamespace(8)}, "-"))
 	}
 
 	if box.Type == structs.Helm() {
@@ -55,7 +54,7 @@ func fillEmptyFields(environment structs.Environment, box *structs.Box) error {
 }
 
 func createHelmRenders(environment structs.Environment, box *structs.Box) error {
-	chart, err := loader.Load(filepath.Dir(box.Chart))
+	chart, err := loader.LoadDir(box.Chart)
 	if err != nil {
 		return err
 	}
@@ -65,7 +64,13 @@ func createHelmRenders(environment structs.Environment, box *structs.Box) error 
 		Revision:  1,
 		IsInstall: true,
 	}
-
+	if len(strings.TrimSpace(box.Values)) != 0 {
+		v, err := chartutil.ReadValuesFile(box.Values)
+		if err != nil {
+			return err
+		}
+		chart.Values = v.AsMap()
+	}
 	e := engine.New(restConfig)
 	var replacedValues map[string]interface{}
 	if len(strings.TrimSpace(environment.Variables)) != 0 {
@@ -109,17 +114,9 @@ func validateBoxes(boxes []structs.Box) error {
 		if len(strings.TrimSpace(box.Chart)) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Chart is missing", index))
 		}
-		_, err := os.Stat(box.Chart)
-		if err != nil {
-			messages = append(messages, fmt.Sprintf("-> Box %d: Chart file can't be opened (%s)", index, box.Chart))
-		}
 
 		if len(strings.TrimSpace(box.Values)) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Values are missing", index))
-		}
-		_, err = os.Stat(box.Values)
-		if err != nil {
-			messages = append(messages, fmt.Sprintf("-> Box %d: Values file can't be opened (%s)", index, box.Values))
 		}
 
 		if box.Type != structs.Helm() {
@@ -272,7 +269,6 @@ func expandBoxVariables(boxes []structs.Box) []structs.Box {
 		b.Type = os.ExpandEnv(b.Type)
 		b.Chart = os.ExpandEnv(b.Chart)
 		b.Values = os.ExpandEnv(b.Values)
-		b.Applications = ExpandApplications(b.Applications)
 		newBoxes = append(newBoxes, b)
 	}
 	return newBoxes

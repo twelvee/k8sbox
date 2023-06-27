@@ -254,10 +254,6 @@ func validateApplications(applications []structs.Application) []string {
 		if len(strings.TrimSpace(application.Chart)) == 0 {
 			messages = append(messages, fmt.Sprintf("--> Application %d: Chart is missing", index))
 		}
-		_, err := os.Stat(application.Chart)
-		if err != nil {
-			messages = append(messages, fmt.Sprintf("--> Application %d: Chart file can't be opened (%s)", index, application.Chart))
-		}
 	}
 	return messages
 }
