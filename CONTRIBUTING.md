@@ -6,12 +6,12 @@ Please, before creating a pool-request, make sure that you create an issue with 
 
 ## Versioning
 
-At the moment of active development of this tool we support only the current major version. At the moment it is version v1. If you find a bug in the minor version (v1.1, for example), make sure that this problem exists in the latest minor version of k8sbox (v1.2, for example). After that, create an issue. <br>
+At the moment of active development of this tool we support only the current major version. At the moment it is version v2. If you find a bug in the minor version (v2.1, for example), make sure that this problem exists in the latest minor version of boxie (v2.2, for example). After that, create an issue. <br>
 Publish your code in the most extreme minor branch of the current major version. It will go into the main as soon as all pooled requesters are closed.
 
 ## Vision
 
-We try to make k8sbox as high-level and versatile as possible. Complex cluster configurations and other settings should be optional.
+We try to make boxie as high-level and versatile as possible. Complex cluster configurations and other settings should be optional.
 
 ## Tests and quality
 

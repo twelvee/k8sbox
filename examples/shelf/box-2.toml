@@ -1,0 +1,5 @@
+type = "helm"
+source = "filesystem"
+chart = "${PWD}/examples/environments/box2"
+values = "${PWD}/examples/environments/box2/Values.yaml"
+name = "second-box"
