@@ -1,5 +1,5 @@
 type = "helm"
 source = "filesystem"
 chart = "${PWD}/examples/environments/box1"
-values = "${PWD}/examples/environments/box1/values.yaml"
+values = "${PWD}/examples/environments/box1/Values.yaml"
 name = "first-box"

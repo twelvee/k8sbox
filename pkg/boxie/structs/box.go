@@ -20,7 +20,7 @@ type Box struct {
 // BoxService is a public BoxService
 type BoxService struct {
 	InstallBox              func(*Box, Environment) ([]*runtime.Object, error)
-	ProcessEnvValues        func(map[string]interface{}, string) map[string]interface{}
+	ProcessEnvValues        func(map[string]interface{}, Environment) map[string]interface{}
 	ValidateBoxes           func([]Box) error
 	FillEmptyFields         func(Environment, *Box) error
 	UninstallBox            func(Environment, Box) ([]*runtime.Object, error)

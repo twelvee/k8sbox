@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/twelvee/boxie/pkg/boxie/utils"
+	"helm.sh/helm/v3/pkg/chartutil"
 	"os"
 	"strings"
 
@@ -25,6 +27,7 @@ func NewEnvironmentService() structs.EnvironmentService {
 		ValidateEnvironment:        validateEnvironment,
 		ExpandVariables:            expandVariables,
 		PrepareToWorkWithNamespace: prepareToWorkWithNamespace,
+		CreateTempDir:              createTempDir,
 	}
 }
 
@@ -124,6 +127,45 @@ func validateEnvironment(environment *structs.Environment) error {
 
 	if len(messages) > 0 {
 		return errors.New(strings.Join(messages, "\n\r"))
+	}
+
+	return nil
+}
+
+func createTempDir(environment *structs.Environment) error {
+	dir := "/tmp/boxie_" + utils.GetShortID(8)
+	err := os.Mkdir(dir, 0750)
+	if err != nil {
+		return err
+	}
+	environment.TempDeployDirectory = dir
+	for _, b := range environment.Boxes {
+		err = os.Mkdir(dir+"/"+b.Name, 0750)
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(dir+"/"+b.Name+"/"+chartutil.ChartfileName, []byte(b.Chart), 0644)
+		if err != nil {
+			return err
+		}
+		if len(strings.TrimSpace(b.Values)) != 0 {
+			err = os.WriteFile(dir+"/"+b.Name+"/"+chartutil.ValuesfileName, []byte(b.Values), 0644)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = os.Mkdir(dir+"/"+b.Name+"/templates", 0750)
+		if err != nil {
+			return err
+		}
+		for _, a := range b.Applications {
+			err := os.WriteFile(dir+"/"+b.Name+"/templates/"+a.Name, []byte(a.Chart), 0644)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

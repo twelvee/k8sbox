@@ -13,6 +13,7 @@ import (
 	"github.com/twelvee/boxie/pkg/boxie/utils"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
+	k8serrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/resource"
@@ -54,7 +55,7 @@ func fillEmptyFields(environment structs.Environment, box *structs.Box) error {
 }
 
 func createHelmRenders(environment structs.Environment, box *structs.Box) error {
-	chart, err := loader.LoadDir(box.Chart)
+	chart, err := loader.LoadDir(environment.TempDeployDirectory + "/" + box.Name)
 	if err != nil {
 		return err
 	}
@@ -65,7 +66,13 @@ func createHelmRenders(environment structs.Environment, box *structs.Box) error 
 		IsInstall: true,
 	}
 	if len(strings.TrimSpace(box.Values)) != 0 {
-		v, err := chartutil.ReadValuesFile(box.Values)
+		v, err := chartutil.ReadValuesFile(environment.TempDeployDirectory + "/" + box.Name + "/" + chartutil.ValuesfileName)
+		if err != nil {
+			return err
+		}
+		chart.Values = v.AsMap()
+	} else {
+		v, err := chartutil.ReadValues([]byte(box.Values))
 		if err != nil {
 			return err
 		}
@@ -73,8 +80,8 @@ func createHelmRenders(environment structs.Environment, box *structs.Box) error 
 	}
 	e := engine.New(restConfig)
 	var replacedValues map[string]interface{}
-	if len(strings.TrimSpace(environment.Variables)) != 0 {
-		replacedValues = processEnvValues(chart.Values, environment.Variables)
+	if len(strings.TrimSpace(environment.Variables)) != 0 || environment.VariablesMap != nil {
+		replacedValues = processEnvValues(chart.Values, environment)
 	}
 	vals, err := chartutil.ToRenderValues(chart, replacedValues, releaseOptions, nil)
 	if err != nil {
@@ -88,11 +95,19 @@ func createHelmRenders(environment structs.Environment, box *structs.Box) error 
 	return nil
 }
 
-func processEnvValues(values map[string]interface{}, dotenvPath string) map[string]interface{} {
-	if len(dotenvPath) > 0 {
-		err := godotenv.Load(dotenvPath)
+func processEnvValues(values map[string]interface{}, environment structs.Environment) map[string]interface{} {
+	if len(environment.Variables) > 0 {
+		err := godotenv.Load(environment.Variables)
 		if err != nil {
 			panic(err)
+		}
+	}
+	if environment.VariablesMap != nil {
+		for k, v := range environment.VariablesMap {
+			err := os.Setenv(k, v)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 	for k, v := range values {
@@ -115,16 +130,13 @@ func validateBoxes(boxes []structs.Box) error {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Chart is missing", index))
 		}
 
-		if len(strings.TrimSpace(box.Values)) == 0 {
-			messages = append(messages, fmt.Sprintf("-> Box %d: Values are missing", index))
-		}
-
 		if box.Type != structs.Helm() {
-			applicationsErrors := validateApplications(box.Applications)
-			if len(applicationsErrors) > 0 {
-				for _, err := range applicationsErrors {
-					messages = append(messages, fmt.Sprintf("-> Box %d: \n\r%s", index, err))
-				}
+			messages = append(messages, fmt.Sprintf("Currently boxie support only helm deployments."))
+		}
+		applicationsErrors := validateApplications(box.Applications)
+		if len(applicationsErrors) > 0 {
+			for _, err := range applicationsErrors {
+				messages = append(messages, fmt.Sprintf("-> Box %d: \n\r%s", index, err))
 			}
 		}
 	}
@@ -195,7 +207,7 @@ func uninstallBox(environment structs.Environment, box structs.Box) ([]*runtime.
 		}
 
 		rtobj, err := restHelper.Delete(box.Namespace, name)
-		if err != nil {
+		if err != nil && !k8serrs.IsNotFound(err) {
 			return nil, err
 		}
 		objects = append(objects, &rtobj)
@@ -267,8 +279,8 @@ func expandBoxVariables(boxes []structs.Box) []structs.Box {
 		b.Name = os.ExpandEnv(b.Name)
 		b.Namespace = os.ExpandEnv(b.Namespace)
 		b.Type = os.ExpandEnv(b.Type)
-		b.Chart = os.ExpandEnv(b.Chart)
 		b.Values = os.ExpandEnv(b.Values)
+		b.Chart = os.ExpandEnv(b.Chart)
 		newBoxes = append(newBoxes, b)
 	}
 	return newBoxes

@@ -3,7 +3,6 @@ name = "test environment"
 namespace = "test"
 variables = "${PWD}/examples/environments/.env"
 
-
 [[boxes]]
 type = "helm"
 chart = "${PWD}/examples/environments/box1"

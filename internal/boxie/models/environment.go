@@ -17,10 +17,11 @@ import (
 var s = spinner.New(spinner.CharSets[21], 100*time.Millisecond)
 
 // RunEnvironment will prepare and deploy environment to your k8s cluster
-func RunEnvironment(tomlFile string) error {
+func RunEnvironment(environment structs.Environment) error {
 	start := time.Now()
 	s.Start()
-	environment := lookForEnvironmentStep(tomlFile)
+	createTempDirectoryStep(&environment)
+	defer os.RemoveAll(environment.TempDeployDirectory)
 	if len(strings.TrimSpace(environment.LoadBoxesFrom)) != 0 {
 		loadBoxesStep(&environment)
 	}
@@ -64,6 +65,18 @@ func deleteEnvironment(environment *structs.Environment) error {
 	fmt.Println("Alright, we're done here!")
 	fmt.Printf("It took %.2fs.\r\n", time.Since(start).Seconds())
 	return nil
+}
+
+func createTempDirectoryStep(environment *structs.Environment) {
+	s.Suffix = " Creating work directory..."
+	err := boxie.GetEnvironmentService().CreateTempDir(environment)
+	if err != nil {
+		s.Suffix = strings.Join([]string{s.Suffix, "FAIL"}, " ")
+		s.Stop()
+		fmt.Fprintf(os.Stderr, "Failed: \n\r%s\n\r", err)
+		os.Exit(1)
+	}
+	s.Suffix = strings.Join([]string{s.Suffix, "OK"}, " ")
 }
 
 func lookForEnvironmentStep(tomlFile string) structs.Environment {
