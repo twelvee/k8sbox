@@ -31,7 +31,7 @@
 		<div class="flex justify-center space-x-2">
 			<a
 				class="btn variant-filled"
-				href="/app/login"
+				href="/app"
 			>
 				Control Panel
 			</a>
