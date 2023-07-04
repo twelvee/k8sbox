@@ -13,23 +13,23 @@
         <div class="pl-4">
           <div class="overflow-y-auto h-screen">
             <div class="w-full">
-
-              <div class="flex justify-between items-center p-4 border-b-[1px] border-white/5">
+              <div class="flex justify-between items-center p-4 border-b-[1px] border-white/5"  v-for="[key, user] in getUsers">
                 <div class="w-full flex space-x-4">
                   <div class="avatar placeholder">
                     <div class="bg-neutral-focus text-neutral-content rounded-full w-12">
-                      <span class="text-lg">SZ</span>
+                      <span class="text-lg">{{ user.AvatarInitials }}</span>
                     </div>
                   </div>
                   <div>
-                    <div class="font-bold">Sergey Zyryanov</div>
-                    <div class="text-sm opacity-50">Backend</div>
+                    <div class="font-bold">{{ user.Name }}</div>
+                    <div class="text-sm opacity-50">{{ user.Email }}</div>
                   </div>
                 </div>
                 <div class="">
-                  <button class="btn btn-ghost btn-xs">details</button>
+                  <router-link :to="'/users/'+user.ID" class="btn btn-ghost btn-xs">details</router-link>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -44,8 +44,9 @@
           </div>
         </div>
         <div class="overflow-y-auto">
+
           <div class="p-4 border-b-[1px] border-l-[1px] border-white/5">
-            <div class="flex justify-between">
+            <!--<div class="flex justify-between">
               <div>
                 <div class="avatar placeholder">
                   <div class="bg-neutral-focus text-neutral-content rounded-full w-8 h-8 mr-1">
@@ -58,7 +59,8 @@
             </div>
             <div class="text-white/50 pt-1 font-thin">Created <span
                 class="font-normal underline"> environment #1123</span> on cluster <span class="font-normal underline">Minikube</span>
-            </div>
+            </div>-->
+            Work in progress..
           </div>
         </div>
       </div>
@@ -67,4 +69,19 @@
 </template>
 <script setup lang="ts">
 import DefaultLayout from "../../components/layouts/DefaultLayout.vue";
+</script>
+
+<script lang="ts">
+import {mapGetters} from "vuex";
+
+export default {
+  async mounted() {
+    if (this.getUsers.size === 0) {
+      await this.$store.dispatch('getUsers')
+    }
+  },
+  computed: {
+    ...mapGetters(['getUsers'])
+  }
+}
 </script>

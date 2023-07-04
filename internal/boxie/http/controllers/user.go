@@ -77,6 +77,18 @@ func GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
+// GetUsers will return a all users
+func GetUsers(c *gin.Context) {
+	shelf := boxie.GetShelf(os.Getenv("BOXIE_SHELF_DRIVER"), os.Getenv("SHELF_DSN"))
+	users, err := shelf.GetUsers()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"users": users})
+}
+
 // AcceptInvite will return a serialized user struct as json by invite code
 func AcceptInvite(c *gin.Context) {
 	var input structs.AcceptInviteRequest

@@ -12,6 +12,7 @@ type Environment struct {
 	LoadBoxesFrom       string            `toml:"load_boxes_from"`
 	LoadBoxesHeaders    map[string]Header `toml:"load_boxes_headers"`
 	TempDeployDirectory string            `toml:"-"`
+	ClusterID           string            `toml:"-"`
 }
 
 // EnvironmentService is a public EnvironmentService

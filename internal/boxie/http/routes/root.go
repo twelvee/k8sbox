@@ -16,6 +16,7 @@ func InitRouter() *gin.Engine {
 	})
 	v1 := router.Group("/api/v1")
 	initAuthRoutes(v1)
+	initUsersRoutes(v1)
 
 	return router
 }

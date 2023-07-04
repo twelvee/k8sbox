@@ -9,6 +9,7 @@ import Invite from "../pages/users/Invite.vue";
 import store from "../stores";
 import RedeemCode from "../pages/authorization/RedeemCode.vue";
 import Logout from "../pages/authorization/Logout.vue";
+import UserDetails from "../pages/users/UserDetails.vue";
 
 const router = createRouter({
     routes: [
@@ -36,6 +37,11 @@ const router = createRouter({
             path: '/users',
             name: 'Users',
             component: Users
+        },
+        {
+            path: '/users/:id',
+            name: 'UserDetails',
+            component: UserDetails
         },
         {
             path: '/users/invite',
@@ -66,20 +72,20 @@ function authMiddleware() {
 
     router.beforeEach(async (to, from) => {
         if (
-            (!user.token || user.token.length === 0) &&
+            (!user.Token || user.Token.length === 0) &&
             (to.name !== 'Login' && to.name !== 'RedeemCode')
         ) {
             return {name: 'Login'}
         }
 
         if (
-            user.token &&
+            user.Token &&
             (to.name === 'Login' || to.name === 'RedeemCode')
         ) {
             return {name: 'Dashboard'}
         }
 
-        if (!user.token && to.page === 'Logout') {
+        if (!user.Token && to.page === 'Logout') {
             return {name: 'Login'}
         }
     })

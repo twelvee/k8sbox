@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@heroicons/vue": "^2.0.18",
+    "date-fns": "^2.30.0",
     "js-cookie": "^3.0.5",
     "vue": "^3.2.31",
     "vue-router": "^4.2.2",

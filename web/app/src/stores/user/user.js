@@ -3,27 +3,60 @@ export default {
     getters: {
         getUser(state) {
             return state.user
-        }
+        },
+        getUsers(state) {
+            return state.usersList
+        },
+        getUserById: (state) => (id) => {
+            return state.usersList.get(parseInt(id))
+        },
     },
     mutations: {
         updateUser(state, data){
-            console.log(data)
-            state.user.name = data.user.Name
-            state.user.email = data.user.Email
-            state.user.token = data.user.Token
-            state.user.avatarInitials = data.user.Name.match(/(^\S\S?|\s\S)?/g).map(v=>v.trim()).join("").match(/(^\S|\S$)?/g).join("").toLocaleUpperCase()
+            state.user.Name = data.user.Name
+            state.user.Email = data.user.Email
+            state.user.Token = data.user.Token
+            state.user.AvatarInitials = data.user.Name.match(/(^\S\S?|\s\S)?/g).map(v=>v.trim()).join("").match(/(^\S|\S$)?/g).join("").toLocaleUpperCase()
             Cookies.set('x-auth-token', data.user.Token, { expires: 7, path: '/' })
+        },
+        updateUsers(state, data) {
+            data.users.forEach((u) => {
+                u.AvatarInitials = u.Name.match(/(^\S\S?|\s\S)?/g).map(v=>v.trim()).join("").match(/(^\S|\S$)?/g).join("").toLocaleUpperCase()
+                state.usersList.set(u.ID, u)
+            })
         }
     },
     state: {
         user: {
-            name: '',
-            email: '',
-            token: '',
-            avatarInitials: 'AA'
-        }
+            Name: '',
+            Email: '',
+            Token: '',
+            AvatarInitials: 'AA'
+        },
+        usersList: new Map()
     },
     actions: {
+        async getUsers(context) {
+            const token = Cookies.get('x-auth-token')
+            if (!token || token.length === 0) {
+                throw "Token undefined."
+            }
+            try {
+                const response = await fetch('http://localhost:8888/api/v1/users', {
+                    method: 'GET',
+                    headers: {
+                        'x-auth-token': token,
+                        'Content-Type': 'application/json;charset=utf-8',
+                        'Accept': 'application/json',
+                    }
+                })
+                const data = await response.json()
+                context.commit('updateUsers', data)
+                return data
+            } catch (e) {
+                throw e
+            }
+        },
         async redeemCode(context, payload) {
             try {
                 const body = JSON.stringify({
@@ -61,7 +94,6 @@ export default {
                     body: body
                 })
                 const data = await response.json()
-                console.log(data)
                 if (!response.ok) {
                     throw 'Wrong login email-password combination.'
                 }

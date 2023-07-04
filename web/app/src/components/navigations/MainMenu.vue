@@ -80,15 +80,15 @@
       <div class="flex items-center p-4 hover:border-white/20 rounded-md border-[1px] border-white/10">
         <div class="avatar placeholder mr-4">
           <div class="bg-neutral-focus text-neutral-content rounded-full w-10">
-            <span class="text-lg">{{ getUser.avatarInitials }}</span>
+            <span class="text-lg">{{ getUser.AvatarInitials }}</span>
           </div>
         </div>
         <div>
           <div>
-        {{ getUser.name }}
+        {{ getUser.Name }}
           </div>
           <div class="text-xs">
-            {{ getUser.email }}
+            {{ getUser.Email }}
           </div>
         </div>
       </div>
@@ -105,6 +105,8 @@ import {mapGetters} from 'vuex'
 </script>
 
 <script lang="ts">
+import {mapGetters} from "vuex";
+
 export default {
   computed: {
     ...mapGetters(['getUser'])
