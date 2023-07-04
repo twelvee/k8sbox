@@ -23,6 +23,11 @@ func GetApplicationService() structs.ApplicationService {
 	return services.NewApplicationService()
 }
 
+// GetUserService will put and return a new UserService
+func GetUserService() structs.UserService {
+	return services.NewUserService()
+}
+
 // GetStorageService will put and return a new StorageService
 func GetStorageService() structs.StorageService {
 	return services.NewStorageService()

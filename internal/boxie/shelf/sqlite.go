@@ -3,7 +3,9 @@ package shelf
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/twelvee/boxie/pkg/boxie/structs"
+	"github.com/twelvee/boxie/pkg/boxie/utils"
 	_ "modernc.org/sqlite"
 )
 
@@ -19,6 +21,17 @@ func createSqliteTables() {
 		}
 	}(db)
 	sqlStmt := `
+	create table if not exists users(
+	  	id integer not null primary key,
+	  	name varchar(255) not null,
+	    email varchar(255) not null unique,
+	    password text null,
+	    created_at integer(4) not null default (strftime('%s','now')),
+	    updated_at integer(4) not null default (strftime('%s','now')),
+	    invite_code varchar(255) null,
+	    token text null
+	);
+
 	create table if not exists boxes (
 	    id integer not null primary key,
 	    name varchar(255) not null unique,
@@ -320,4 +333,274 @@ func getBoxesFromSQLite() ([]structs.Box, error) {
 	}
 
 	return boxes, nil
+}
+
+func createUserSQLite(request structs.CreateUserRequest) (string, error) {
+	db, err := sql.Open("sqlite", currentConnectionDSN)
+	if err != nil {
+		return "", err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	sqlStmt := "insert into users ('name', 'email', 'invite_code') values (?, ?, ?)"
+
+	tx, err := db.Begin()
+	if err != nil {
+		return "", err
+	}
+	stmt, err := tx.Prepare(sqlStmt)
+	if err != nil {
+		return "", err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+
+	inviteCode := utils.GetShortID(8)
+
+	_, err = stmt.Exec(request.Name, request.Email, inviteCode)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return "", err
+	}
+
+	return inviteCode, nil
+}
+
+func deleteUserSQLite(request structs.DeleteUserRequest) error {
+	db, err := sql.Open("sqlite", currentConnectionDSN)
+	if err != nil {
+		return err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	sqlStmt := "delete from users where id=?"
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(sqlStmt)
+	if err != nil {
+		return err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+
+	_, err = stmt.Exec(request.ID)
+
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getUserSQLite(token string) (structs.User, error) {
+	var user structs.User
+	db, err := sql.Open("sqlite", currentConnectionDSN)
+	if err != nil {
+		return user, err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	stmt, err := db.Prepare("select id, name, email, created_at, updated_at from users where token = ?")
+	if err != nil {
+		return user, err
+	}
+	defer stmt.Close()
+	err = stmt.QueryRow(token).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return user, err
+	}
+
+	user.Token = token
+	user.Password = "hidden"
+
+	return user, nil
+}
+
+func checkInviteCodeSQLite(code string) (structs.User, error) {
+	var user structs.User
+	db, err := sql.Open("sqlite", currentConnectionDSN)
+	if err != nil {
+		return user, err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	stmt, err := db.Prepare("select id, name, email, created_at, updated_at, invite_code from users where invite_code = ?")
+	if err != nil {
+		return user, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRow(code).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.InviteCode)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func setUserPasswordSQLite(code string, password string) (structs.User, error) {
+	var user structs.User
+	db, err := sql.Open("sqlite", currentConnectionDSN)
+	if err != nil {
+		return user, err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	stmt, err := db.Prepare("select id, name, email, created_at, updated_at, invite_code from users where invite_code = ?")
+	if err != nil {
+		return user, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRow(code).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.InviteCode)
+	if err != nil {
+		return user, err
+	}
+
+	p, err := hashPassword(password)
+	if err != nil {
+		return user, err
+	}
+
+	user.Password = p
+	user.Token = generateSecureToken(32)
+
+	sqlStmt := "update users SET password=?, token=?, invite_code=null where id=?"
+
+	tx, err := db.Begin()
+	if err != nil {
+		return user, err
+	}
+	stmt, err = tx.Prepare(sqlStmt)
+	if err != nil {
+		return user, err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+
+	_, err = stmt.Exec(user.Password, user.Token, user.ID)
+
+	if err != nil {
+		return user, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func createTokenSQLite(request structs.LoginRequest) (structs.User, error) {
+	var user structs.User
+	db, err := sql.Open("sqlite", currentConnectionDSN)
+	if err != nil {
+		return user, err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	stmt, err := db.Prepare("select id, name, email, created_at, updated_at, password from users where email = ?")
+	if err != nil {
+		return user, err
+	}
+	defer stmt.Close()
+
+	var password string
+	err = stmt.QueryRow(request.Email).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.UpdatedAt, &password)
+	if err != nil {
+		return user, err
+	}
+
+	if !checkPasswordHash(request.Password, password) {
+		return user, fmt.Errorf("Incorrect password")
+	}
+
+	user.Token = generateSecureToken(32)
+
+	// Update user token in DB
+	sqlStmt := "update users SET token=? where id=?"
+
+	tx, err := db.Begin()
+	if err != nil {
+		return user, err
+	}
+	stmt, err = tx.Prepare(sqlStmt)
+	if err != nil {
+		return user, err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+
+	_, err = stmt.Exec(user.Token, user.ID)
+
+	if err != nil {
+		return user, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
