@@ -33,6 +33,13 @@ func createSqliteTables(conn string) {
 	    token text null
 	);
 
+	create table if not exists clusters(
+	  	name varchar(255) not null unique,
+	    kubeconfig text not null,
+	    is_active boolean not null default false,
+	    created_at integer(4) not null default (strftime('%s','now'))
+	);
+
 	create table if not exists boxes (
 	    name varchar(255) not null unique,
 	    namespace varchar(255) null,
@@ -43,14 +50,14 @@ func createSqliteTables(conn string) {
 	);
 
 	create table if not exists applications(
-	  	name varchar(255) not null unique,
+	  	name varchar(255) not null,
 	    chart text not null,
-	    box_id integer not null,
+	    box_name varchar(255) not null,
 	    created_at integer(4) not null default (strftime('%s','now')),
 	    
-	    CONSTRAINT fk_box
-			FOREIGN KEY (box_id)
-			REFERENCES boxes (id)
+	    CONSTRAINT fk_box_name
+			FOREIGN KEY (box_name)
+			REFERENCES boxes (name)
 			ON DELETE CASCADE
 	);
 
@@ -69,13 +76,6 @@ func createSqliteTables(conn string) {
 			FOREIGN KEY (cluster)
 			REFERENCES clusters (name)
 			ON DELETE CASCADE
-	);
-
-	create table if not exists clusters(
-	  	name varchar(255) not null unique,
-	    kubeconfig text not null,
-	    is_active boolean not null default false,
-	    created_at integer(4) not null default (strftime('%s','now'))
 	);
 	`
 	_, err = db.Exec(sqlStmt)
@@ -102,11 +102,12 @@ type SQLite struct {
 	// Boxes
 	GetBox    func(name string) (structs.Box, error)
 	PutBox    func(box structs.Box, force bool) error
+	UpdateBox func(box structs.Box) error
 	DeleteBox func(name string) error
 	GetBoxes  func() ([]structs.Box, error)
 
 	// Applications
-	CreateApplications func(app structs.Application, force bool, boxID int64) error
+	CreateApplications func(app structs.Application, boxName string) error
 
 	// Clusters
 	GetCluster           func(request structs.GetClusterRequest) (structs.Cluster, error)
@@ -135,6 +136,7 @@ func NewSQLite(conn string) *SQLite {
 		GetBoxes:             getBoxes,
 		DeleteBox:            deleteBox,
 		PutBox:               putBox,
+		UpdateBox:            updateBox,
 		GetCluster:           getCluster,
 		GetClusters:          getClusters,
 		DeleteCluster:        deleteCluster,

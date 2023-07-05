@@ -3,7 +3,7 @@ import Login from "../pages/authorization/Login.vue";
 import Dashboard from "../pages/Dashboard.vue";
 import Users from "../pages/users/Users.vue";
 import Clusters from "../pages/clusters/Clusters.vue";
-import Boxes from "../pages/Boxes.vue";
+import Boxes from "../pages/boxes/Boxes.vue";
 import Environments from "../pages/Environments.vue";
 import Invite from "../pages/users/Invite.vue";
 import store from "../stores";
@@ -14,6 +14,9 @@ import Setup from "../pages/setup/Setup.vue";
 import CreateCluster from "../pages/clusters/CreateCluster.vue";
 import ClusterEdit from "../pages/clusters/ClusterEdit.vue";
 import ClusterDelete from "../pages/clusters/ClusterDelete.vue";
+import CreateBox from "../pages/boxes/CreateBox.vue";
+import EditBox from "../pages/boxes/EditBox.vue";
+import DeleteBox from "../pages/boxes/DeleteBox.vue";
 
 const router = createRouter({
     routes: [
@@ -81,6 +84,21 @@ const router = createRouter({
             path: '/boxes',
             name: 'Boxes',
             component: Boxes
+        },
+        {
+            path: '/boxes/create',
+            name: 'Boxes.Create',
+            component: CreateBox
+        },
+        {
+            path: '/boxes/:name/edit',
+            name: 'Boxes.Edit',
+            component: EditBox
+        },
+        {
+            path: '/boxes/:name/delete',
+            name: 'Boxes.Delete',
+            component: DeleteBox
         },
         {
             path: '/environments',

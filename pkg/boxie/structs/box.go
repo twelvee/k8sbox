@@ -42,3 +42,13 @@ func Plain() string {
 func GetBoxAliaces() []string {
 	return []string{"box", "boxes"}
 }
+
+// DeleteBoxRequest is rest api request that delete box by its name
+type DeleteBoxRequest struct {
+	Name string
+}
+
+// GetBoxRequest is rest api request that gets box by its name
+type GetBoxRequest struct {
+	Name string
+}

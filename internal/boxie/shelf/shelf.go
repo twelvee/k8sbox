@@ -30,6 +30,7 @@ type Shelf struct {
 
 	// Boxes
 	PutBox    func(box structs.Box, force bool) error
+	UpdateBox func(box structs.Box) error
 	DeleteBox func(string) error
 	GetBoxes  func() ([]structs.Box, error)
 	GetBox    func(string) (structs.Box, error)
@@ -82,6 +83,7 @@ func NewShelf(connectionType string, dsn string) Shelf {
 		GetSetupRequired: getSetupRequired,
 
 		PutBox:    putBox,
+		UpdateBox: updateBox,
 		DeleteBox: deleteBox,
 		GetBoxes:  getBoxes,
 		GetBox:    getBox,
@@ -120,6 +122,13 @@ func getBox(name string) (structs.Box, error) {
 func putBox(box structs.Box, force bool) error {
 	if currentConnectionType == string(CONNECTION_SQLITE) {
 		return adapter.PutBox(box, force)
+	}
+	return fmt.Errorf("Failed to open shelf.")
+}
+
+func updateBox(box structs.Box) error {
+	if currentConnectionType == string(CONNECTION_SQLITE) {
+		return adapter.UpdateBox(box)
 	}
 	return fmt.Errorf("Failed to open shelf.")
 }

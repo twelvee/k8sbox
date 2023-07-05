@@ -19,6 +19,7 @@ func InitRouter() *gin.Engine {
 	initAuthRoutes(v1)
 	initUsersRoutes(v1)
 	initClustersRoutes(v1)
+	initBoxesRoutes(v1)
 
 	return router
 }

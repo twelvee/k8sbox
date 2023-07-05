@@ -5,7 +5,7 @@ import (
 	"github.com/twelvee/boxie/pkg/boxie/structs"
 )
 
-func createApplication(app structs.Application, force bool, boxID int64) error {
+func createApplication(app structs.Application, boxName string) error {
 	db, err := sql.Open("sqlite", connectionDSN)
 	if err != nil {
 		return err
@@ -17,10 +17,7 @@ func createApplication(app structs.Application, force bool, boxID int64) error {
 		}
 	}(db)
 
-	sqlStmt := "insert into applications ('name', 'chart', 'box_id') values (?, ?, ?)"
-	if force {
-		sqlStmt = "insert into applications ('name', 'chart', 'box_id') values (?, ?, ?) on conflict do update set name=?, chart=?, box_id=?"
-	}
+	sqlStmt := "insert into applications ('name', 'chart', 'box_name') values (?, ?, ?)"
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -37,11 +34,8 @@ func createApplication(app structs.Application, force bool, boxID int64) error {
 		}
 	}(stmt)
 
-	if !force {
-		_, err = stmt.Exec(app.Name, app.Chart, boxID)
-	} else {
-		_, err = stmt.Exec(app.Name, app.Chart, boxID, app.Name, app.Chart, boxID)
-	}
+	_, err = stmt.Exec(app.Name, app.Chart, boxName)
+
 	if err != nil {
 		return err
 	}

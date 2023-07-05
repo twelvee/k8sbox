@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/twelvee/boxie/pkg/boxie/structs"
 )
 
@@ -18,26 +19,24 @@ func getBox(name string) (structs.Box, error) {
 		}
 	}(db)
 
-	stmt, err := db.Prepare("select name, namespace, box_type, helm_chart, helm_values, id from boxes where name = ?")
+	stmt, err := db.Prepare("select name, namespace, box_type, helm_chart, helm_values from boxes where name = ?")
 	if err != nil {
 		return box, err
 	}
 	defer stmt.Close()
 
-	var boxID string
-
-	err = stmt.QueryRow(name).Scan(&box.Name, &box.Namespace, &box.Type, &box.Chart, &box.Values, &boxID)
+	err = stmt.QueryRow(name).Scan(&box.Name, &box.Namespace, &box.Type, &box.Chart, &box.Values)
 	if err != nil {
 		return box, err
 	}
 
-	stmt, err = db.Prepare("select name, chart from applications where box_id = ?")
+	stmt, err = db.Prepare("select name, chart from applications where box_name = ?")
 	if err != nil {
 		return box, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query(boxID)
+	rows, err := stmt.Query(box.Name)
 	if err != nil {
 		return box, err
 	}
@@ -60,6 +59,80 @@ func getBox(name string) (structs.Box, error) {
 	box.Applications = applications
 
 	return box, nil
+}
+
+func updateBox(box structs.Box) error {
+	db, err := sql.Open("sqlite", connectionDSN)
+	if err != nil {
+		return err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+	fmt.Println(box)
+	sqlStmt := "update boxes set 'namespace'=?, 'box_type'=?, 'helm_chart'=?, 'helm_values'=? where name=?"
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(sqlStmt)
+	if err != nil {
+		return err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+	_, err = stmt.Exec(box.Namespace, box.Type, box.Chart, box.Values, box.Name)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	sqlStmt = "delete from applications where box_name=?"
+
+	tx, err = db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err = tx.Prepare(sqlStmt)
+	if err != nil {
+		return err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+	_, err = stmt.Exec(box.Name)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	for _, a := range box.Applications {
+		err = createApplication(a, box.Name)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func putBox(box structs.Box, force bool) error {
@@ -93,11 +166,10 @@ func putBox(box structs.Box, force bool) error {
 			panic(err)
 		}
 	}(stmt)
-	var r sql.Result
 	if !force {
-		r, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values)
+		_, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values)
 	} else {
-		r, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values, box.Namespace, box.Type, box.Chart, box.Values)
+		_, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values, box.Namespace, box.Type, box.Chart, box.Values)
 	}
 	if err != nil {
 		return err
@@ -108,13 +180,8 @@ func putBox(box structs.Box, force bool) error {
 		return err
 	}
 
-	boxID, err := r.LastInsertId()
-	if err != nil {
-		return err
-	}
-
 	for _, a := range box.Applications {
-		err = createApplication(a, force, boxID)
+		err = createApplication(a, box.Name)
 		if err != nil {
 			return err
 		}
@@ -176,31 +243,32 @@ func getBoxes() ([]structs.Box, error) {
 		}
 	}(db)
 
-	rows, err := db.Query("select id, name, namespace, box_type, created_at as created from boxes")
+	rows, err := db.Query("select name, namespace, box_type, helm_chart, helm_values, created_at as created from boxes")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	var boxes []structs.Box
 	for rows.Next() {
-		var boxID string
 		var name string
 		var namespace string
+		var chart string
+		var values string
 		var box_type string
 		var created string
 
-		err = rows.Scan(&boxID, &name, &namespace, &box_type, &created)
+		err = rows.Scan(&name, &namespace, &box_type, &chart, &values, &created)
 		if err != nil {
 			return nil, err
 		}
 
-		stmt, err := db.Prepare("select name, chart from applications where box_id = ?")
+		stmt, err := db.Prepare("select name, chart from applications where box_name = ?")
 		if err != nil {
 			return nil, err
 		}
 		defer stmt.Close()
 
-		appRows, err := stmt.Query(boxID)
+		appRows, err := stmt.Query(name)
 		if err != nil {
 			return nil, err
 		}
@@ -210,7 +278,7 @@ func getBoxes() ([]structs.Box, error) {
 			var name string
 			var chart string
 
-			err = rows.Scan(&name, &chart)
+			err = appRows.Scan(&name, &chart)
 			if err != nil {
 				return nil, err
 			}
@@ -220,7 +288,7 @@ func getBoxes() ([]structs.Box, error) {
 		if err != nil {
 			return nil, err
 		}
-		boxes = append(boxes, structs.Box{Name: name, Namespace: namespace, Type: box_type, Created: created, Applications: applications})
+		boxes = append(boxes, structs.Box{Name: name, Namespace: namespace, Type: box_type, Chart: chart, Values: values, Created: created, Applications: applications})
 	}
 	err = rows.Err()
 	if err != nil {

@@ -93,11 +93,10 @@ func putEnvironment(box structs.Box, force bool) error {
 			panic(err)
 		}
 	}(stmt)
-	var r sql.Result
 	if !force {
-		r, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values)
+		_, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values)
 	} else {
-		r, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values, box.Namespace, box.Type, box.Chart, box.Values)
+		_, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values, box.Namespace, box.Type, box.Chart, box.Values)
 	}
 	if err != nil {
 		return err
@@ -108,13 +107,8 @@ func putEnvironment(box structs.Box, force bool) error {
 		return err
 	}
 
-	boxID, err := r.LastInsertId()
-	if err != nil {
-		return err
-	}
-
 	for _, a := range box.Applications {
-		err = createApplication(a, force, boxID)
+		err = createApplication(a, box.Name)
 		if err != nil {
 			return err
 		}
