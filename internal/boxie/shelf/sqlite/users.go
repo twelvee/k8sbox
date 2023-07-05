@@ -253,6 +253,29 @@ func setUserPassword(code string, password string) (structs.User, error) {
 	return user, nil
 }
 
+func getSetupRequired() (bool, error) {
+	db, err := sql.Open("sqlite", connectionDSN)
+	if err != nil {
+		return false, err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	rows, err := db.Query("select id, name from users")
+	defer rows.Close()
+	if err != nil {
+		return false, err
+	}
+	if rows.Next() {
+		return false, nil
+	}
+	return true, nil
+}
+
 func createToken(request structs.LoginRequest) (structs.User, error) {
 	var user structs.User
 	db, err := sql.Open("sqlite", connectionDSN)

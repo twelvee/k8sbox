@@ -18,18 +18,59 @@ func getCluster(request structs.GetClusterRequest) (structs.Cluster, error) {
 		}
 	}(db)
 
-	stmt, err := db.Prepare("select id, name, kubeconfig, is_active, created_at from clusters where name = ?")
+	stmt, err := db.Prepare("select name, kubeconfig, is_active, created_at from clusters where name = ?")
 	if err != nil {
 		return cluster, err
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(request.Name).Scan(&cluster.ID, &cluster.Name, &cluster.Kubeconfig, &cluster.IsActive, &cluster.CreatedAt)
+	err = stmt.QueryRow(request.Name).Scan(&cluster.Name, &cluster.Kubeconfig, &cluster.IsActive, &cluster.CreatedAt)
 	if err != nil {
 		return cluster, err
 	}
 
 	return cluster, nil
+}
+
+func setClusterConnection(cluster structs.Cluster) (bool, error) {
+	db, err := sql.Open("sqlite", connectionDSN)
+	if err != nil {
+		return false, err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	sqlStmt := "update clusters set is_active=? where name=?"
+
+	tx, err := db.Begin()
+	if err != nil {
+		return false, err
+	}
+	stmt, err := tx.Prepare(sqlStmt)
+	if err != nil {
+		return false, err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+
+	_, err = stmt.Exec(cluster.IsActive, cluster.Name)
+	if err != nil {
+		return false, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func putCluster(cluster structs.Cluster, force bool) error {
@@ -44,9 +85,9 @@ func putCluster(cluster structs.Cluster, force bool) error {
 		}
 	}(db)
 
-	sqlStmt := "insert into clusters ('name', 'kubeconfig') values (?, ?)"
+	sqlStmt := "insert into clusters ('name', 'kubeconfig', 'is_active') values (?, ?, ?)"
 	if force {
-		sqlStmt = "insert into clusters ('name', 'kubeconfig') values (?, ?) on conflict do update set kubeconfig=?"
+		sqlStmt = "insert into clusters ('name', 'kubeconfig') values (?, ?, ?) on conflict do update set kubeconfig=?"
 	}
 
 	tx, err := db.Begin()
@@ -64,9 +105,9 @@ func putCluster(cluster structs.Cluster, force bool) error {
 		}
 	}(stmt)
 	if !force {
-		_, err = stmt.Exec(cluster.Name, cluster.Kubeconfig)
+		_, err = stmt.Exec(cluster.Name, cluster.Kubeconfig, cluster.IsActive)
 	} else {
-		_, err = stmt.Exec(cluster.Name, cluster.Kubeconfig, cluster.Kubeconfig)
+		_, err = stmt.Exec(cluster.Name, cluster.Kubeconfig, cluster.IsActive, cluster.Kubeconfig)
 	}
 	if err != nil {
 		return err
@@ -157,4 +198,45 @@ func getClusters() ([]structs.Cluster, error) {
 	}
 
 	return clusters, nil
+}
+
+func updateCluster(cluster structs.Cluster) error {
+	db, err := sql.Open("sqlite", connectionDSN)
+	if err != nil {
+		return err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	sqlStmt := "update clusters set kubeconfig=?, is_active=? where name=?"
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(sqlStmt)
+	if err != nil {
+		return err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+
+	_, err = stmt.Exec(cluster.Kubeconfig, cluster.IsActive, cluster.Name)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
 }

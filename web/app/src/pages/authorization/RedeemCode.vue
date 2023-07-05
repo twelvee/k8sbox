@@ -4,6 +4,7 @@
       <div class="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
         <div class="card-header text-center">
           <h1 class="h1 text-2xl pt-4">Welcome to Boxie!</h1>
+          <div class="badge" v-if="urlCode">{{urlCode}}</div>
         </div>
         <div class="card-body">
           <div class="form-control">
@@ -44,10 +45,16 @@
 export default {
   data() {
     return {
-      code: '',
+      code: this.$route.query.code,
+      urlCode: this.$route.query.code,
       password: '',
       password_confirmation: '',
       errors: ''
+    }
+  },
+  mounted() {
+    if (this.code != this.urlCode) {
+      this.code = this.urlCode
     }
   },
   methods: {

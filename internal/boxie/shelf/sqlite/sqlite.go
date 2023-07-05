@@ -7,7 +7,10 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func createSqliteTables() {
+var connectionDSN string
+
+func createSqliteTables(conn string) {
+	connectionDSN = conn
 	db, err := sql.Open("sqlite", connectionDSN)
 	if err != nil {
 		panic(err)
@@ -81,12 +84,11 @@ func createSqliteTables() {
 	}
 }
 
-var connectionDSN string
-
 type SQLite struct {
 	connectionDNS string
 
-	CreateSQLiteTables func()
+	CreateSQLiteTables func(conn string)
+	GetSetupRequired   func() (bool, error)
 
 	// Users
 	CreateUser      func(request structs.CreateUserRequest) (string, error)
@@ -107,32 +109,37 @@ type SQLite struct {
 	CreateApplications func(app structs.Application, force bool, boxID int64) error
 
 	// Clusters
-	GetCluster    func(request structs.GetClusterRequest) (structs.Cluster, error)
-	PutCluster    func(cluster structs.Cluster, force bool) error
-	DeleteCluster func(request structs.DeleteClusterRequest) error
-	GetClusters   func() ([]structs.Cluster, error)
+	GetCluster           func(request structs.GetClusterRequest) (structs.Cluster, error)
+	PutCluster           func(cluster structs.Cluster, force bool) error
+	DeleteCluster        func(request structs.DeleteClusterRequest) error
+	GetClusters          func() ([]structs.Cluster, error)
+	SetClusterConnection func(cluster structs.Cluster) (bool, error)
+	UpdateCluster        func(cluster structs.Cluster) error
 }
 
 func NewSQLite(conn string) *SQLite {
-	connectionDSN = conn
+	createSqliteTables(conn)
 	return &SQLite{
-		connectionDNS:      connectionDSN,
-		CreateSQLiteTables: createSqliteTables,
-		CreateApplications: createApplication,
-		CreateUser:         createUser,
-		DeleteUser:         deleteUser,
-		GetUsers:           getUsers,
-		GetUser:            getUser,
-		CheckInviteCode:    checkInviteCode,
-		SetUserPassword:    setUserPassword,
-		CreateToken:        createToken,
-		GetBox:             getBox,
-		GetBoxes:           getBoxes,
-		DeleteBox:          deleteBox,
-		PutBox:             putBox,
-		GetCluster:         getCluster,
-		GetClusters:        getClusters,
-		DeleteCluster:      deleteCluster,
-		PutCluster:         putCluster,
+		connectionDNS:        connectionDSN,
+		CreateSQLiteTables:   createSqliteTables,
+		GetSetupRequired:     getSetupRequired,
+		CreateApplications:   createApplication,
+		CreateUser:           createUser,
+		DeleteUser:           deleteUser,
+		GetUsers:             getUsers,
+		GetUser:              getUser,
+		CheckInviteCode:      checkInviteCode,
+		SetUserPassword:      setUserPassword,
+		CreateToken:          createToken,
+		GetBox:               getBox,
+		GetBoxes:             getBoxes,
+		DeleteBox:            deleteBox,
+		PutBox:               putBox,
+		GetCluster:           getCluster,
+		GetClusters:          getClusters,
+		DeleteCluster:        deleteCluster,
+		PutCluster:           putCluster,
+		SetClusterConnection: setClusterConnection,
+		UpdateCluster:        updateCluster,
 	}
 }

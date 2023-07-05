@@ -45,7 +45,4 @@ type DeleteUserRequest struct {
 
 // UserService is a public UserService
 type UserService struct {
-	Login       func() error
-	Invite      func() error
-	SetPassword func() error
 }

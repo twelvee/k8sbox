@@ -15,8 +15,10 @@ func InitRouter() *gin.Engine {
 		c.File("./web/app/dist/index.html")
 	})
 	v1 := router.Group("/api/v1")
+	initSetupRoutes(v1)
 	initAuthRoutes(v1)
 	initUsersRoutes(v1)
+	initClustersRoutes(v1)
 
 	return router
 }

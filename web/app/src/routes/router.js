@@ -2,7 +2,7 @@ import {createRouter, createWebHistory} from 'vue-router'
 import Login from "../pages/authorization/Login.vue";
 import Dashboard from "../pages/Dashboard.vue";
 import Users from "../pages/users/Users.vue";
-import Clusters from "../pages/Clusters.vue";
+import Clusters from "../pages/clusters/Clusters.vue";
 import Boxes from "../pages/Boxes.vue";
 import Environments from "../pages/Environments.vue";
 import Invite from "../pages/users/Invite.vue";
@@ -10,6 +10,10 @@ import store from "../stores";
 import RedeemCode from "../pages/authorization/RedeemCode.vue";
 import Logout from "../pages/authorization/Logout.vue";
 import UserDetails from "../pages/users/UserDetails.vue";
+import Setup from "../pages/setup/Setup.vue";
+import CreateCluster from "../pages/clusters/CreateCluster.vue";
+import ClusterEdit from "../pages/clusters/ClusterEdit.vue";
+import ClusterDelete from "../pages/clusters/ClusterDelete.vue";
 
 const router = createRouter({
     routes: [
@@ -17,6 +21,11 @@ const router = createRouter({
             path: '/',
             name: 'Dashboard',
             component: Dashboard
+        },
+        {
+            path: '/setup',
+            name: 'Setup',
+            component: Setup
         },
         {
             path: '/login',
@@ -54,6 +63,21 @@ const router = createRouter({
             component: Clusters
         },
         {
+            path: '/clusters/connect',
+            name: 'CreateCluster',
+            component: CreateCluster
+        },
+        {
+            path: '/clusters/:name',
+            name: 'ClusterEdit',
+            component: ClusterEdit
+        },
+        {
+            path: '/clusters/:name/delete',
+            name: 'ClusterDelete',
+            component: ClusterDelete
+        },
+        {
             path: '/boxes',
             name: 'Boxes',
             component: Boxes
@@ -71,11 +95,20 @@ function authMiddleware() {
     const user = store.getters.getUser
 
     router.beforeEach(async (to, from) => {
-        if (
-            (!user.Token || user.Token.length === 0) &&
-            (to.name !== 'Login' && to.name !== 'RedeemCode')
-        ) {
-            return {name: 'Login'}
+        if (!user.Token || user.Token.length === 0) {
+            console.log(to.name)
+            const data = await store.dispatch('checkIsSetupRequired')
+
+            if (to.name !== 'Setup' && data.required === true) {
+                return {name:'Setup'}
+            } else if (data.required === false) {
+                if (to.name !== 'Login' && to.name !== 'RedeemCode') {
+                    return {name: 'Login'}
+                }
+                if (to.name === 'Logout') {
+                    return {name: 'Login'}
+                }
+            }
         }
 
         if (
@@ -83,10 +116,6 @@ function authMiddleware() {
             (to.name === 'Login' || to.name === 'RedeemCode')
         ) {
             return {name: 'Dashboard'}
-        }
-
-        if (!user.Token && to.page === 'Logout') {
-            return {name: 'Login'}
         }
     })
 }

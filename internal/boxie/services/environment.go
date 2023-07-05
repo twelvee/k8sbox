@@ -56,18 +56,21 @@ var k8sclient *kubernetes.Clientset
 var restConfig *rest.Config
 
 // GetConfigFromKubeconfig is loading your Kubeconfig into configuration struct
-func GetConfigFromKubeconfig(namespace string) *rest.Config {
-	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "", namespace)
+func GetConfigFromKubeconfig(namespace string, kubeconfig string) (*rest.Config, error) {
+	restClientGetter := kube.GetConfig(kubeconfig, "", namespace)
 	rc, err := restClientGetter.ToRESTConfig()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return rc
+	return rc, nil
 }
 
 func prepareToWorkWithNamespace(namespace string) error {
-	restConfig = GetConfigFromKubeconfig(namespace)
+	restConfig, err := GetConfigFromKubeconfig(namespace, os.Getenv("KUBECONFIG"))
+	if err != nil {
+		return err
+	}
 	cl, err := kubernetes.NewForConfig(restConfig)
 	k8sclient = cl
 	if err != nil {

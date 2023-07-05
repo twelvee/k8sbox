@@ -33,6 +33,11 @@ func GetStorageService() structs.StorageService {
 	return services.NewStorageService()
 }
 
+// GetClusterService will put and return a new ClusterService
+func GetClusterService() structs.ClusterService {
+	return services.NewClusterService()
+}
+
 // GetTomlFormatter will put and return a new TomlFormatter
 func GetTomlFormatter() formatters.TomlFormatter {
 	return formatters.NewTomlFormatter()

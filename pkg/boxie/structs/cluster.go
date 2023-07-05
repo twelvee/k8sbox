@@ -3,7 +3,6 @@ package structs
 
 // Cluster is your cluster in a struct
 type Cluster struct {
-	ID         int32
 	Name       string
 	Kubeconfig string
 	IsActive   bool
@@ -18,4 +17,9 @@ type DeleteClusterRequest struct {
 // GetClusterRequest is rest api request for get cluster method
 type GetClusterRequest struct {
 	Name string `json:"name"`
+}
+
+// ClusterService is a public ClusterService
+type ClusterService struct {
+	TestConnection func(cluster Cluster) (bool, error)
 }

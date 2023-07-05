@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@heroicons/vue": "^2.0.18",
+    "codemirror": "^5.65.13",
+    "codemirror-editor-vue3": "^2.3.0",
     "date-fns": "^2.30.0",
     "js-cookie": "^3.0.5",
     "vue": "^3.2.31",

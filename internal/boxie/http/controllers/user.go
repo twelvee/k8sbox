@@ -10,6 +10,33 @@ import (
 	"os"
 )
 
+// Setup method will create a new user and generate invite link
+func Setup(c *gin.Context) {
+	var input structs.CreateUserRequest
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	shelf := boxie.GetShelf(os.Getenv("BOXIE_SHELF_DRIVER"), os.Getenv("SHELF_DSN"))
+	required, err := shelf.GetSetupRequired()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if !required {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Setup isn't requested."})
+		return
+	}
+	code, err := shelf.CreateUser(input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"invite_code": code})
+}
+
 // Register method will create a new user and generate invite link
 func Register(c *gin.Context) {
 	var input structs.CreateUserRequest
@@ -44,6 +71,17 @@ func Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+func GetSetupRequired(c *gin.Context) {
+	shelf := boxie.GetShelf(os.Getenv("BOXIE_SHELF_DRIVER"), os.Getenv("SHELF_DSN"))
+	req, err := shelf.GetSetupRequired()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"required": req})
 }
 
 // DeleteUser will delete user by ID

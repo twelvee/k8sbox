@@ -124,7 +124,47 @@ export default {
                 throw e
             }
         },
+        async checkIsSetupRequired(context) {
+            try {
+                const response = await fetch('http://localhost:8888/api/v1/setup_required', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json;charset=utf-8',
+                        'Accept': 'application/json',
+                    }
+                })
+                return await response.json()
+            } catch (e) {
+                throw e
+            }
+        },
+        async createFirstInvite(context, payload) {
+            if (payload.name.length === 0 || payload.email.length === 0) {
+                throw "Email and Name fields are required"
+            }
+            try {
+                const body = JSON.stringify({
+                    name: payload.name,
+                    email: payload.email
+                })
+                const response = await fetch('http://localhost:8888/api/v1/user/create_first', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json;charset=utf-8',
+                        'Accept': 'application/json',
+                    },
+                    body: body
+                })
+                return await response.json()
+            } catch(e) {
+                throw e
+            }
+        },
         async createInvite(context, payload) {
+            const token = Cookies.get('x-auth-token')
+            if (!token || token.length === 0) {
+                throw "Token undefined."
+            }
             if (payload.name.length === 0 || payload.email.length === 0) {
                 throw "Email and Name fields are required"
             }
@@ -136,7 +176,7 @@ export default {
                 const response = await fetch('http://localhost:8888/api/v1/user/create', {
                     method: 'POST',
                     headers: {
-                        'x-auth-token': '64840d2d722d03b5c6c7560d4afb1c116c76ceab72edbfaf8819879b033f48b2',
+                        'x-auth-token': token,
                         'Content-Type': 'application/json;charset=utf-8',
                         'Accept': 'application/json',
                     },

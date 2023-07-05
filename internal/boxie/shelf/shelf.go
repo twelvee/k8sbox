@@ -24,6 +24,10 @@ type Shelf struct {
 	ShelfType          string
 	ShelfDSN           string
 	ShelfSQLiteAdapter *sqlite.SQLite
+
+	// Setup
+	GetSetupRequired func() (bool, error)
+
 	// Boxes
 	PutBox    func(box structs.Box, force bool) error
 	DeleteBox func(string) error
@@ -40,10 +44,12 @@ type Shelf struct {
 	GetUsers        func() ([]structs.User, error)
 
 	// Clusters
-	PutCluster    func(cluster structs.Cluster, force bool) error
-	GetClusters   func() ([]structs.Cluster, error)
-	GetCluster    func(request structs.GetClusterRequest) (structs.Cluster, error)
-	DeleteCluster func(request structs.DeleteClusterRequest) error
+	PutCluster           func(cluster structs.Cluster, force bool) error
+	GetClusters          func() ([]structs.Cluster, error)
+	GetCluster           func(request structs.GetClusterRequest) (structs.Cluster, error)
+	DeleteCluster        func(request structs.DeleteClusterRequest) error
+	SetClusterConnection func(cluster structs.Cluster) (bool, error)
+	UpdateCluster        func(cluster structs.Cluster) error
 }
 
 var adapter *sqlite.SQLite
@@ -65,14 +71,15 @@ func NewShelf(connectionType string, dsn string) Shelf {
 
 	if currentConnectionType == string(CONNECTION_SQLITE) {
 		// Will throw panic on error
-		adapter = sqlite.NewSQLite(dsn)
-		adapter.CreateSQLiteTables()
+		adapter = sqlite.NewSQLite(currentConnectionDSN)
 	}
 
 	return Shelf{
 		ShelfType:          connectionType,
 		ShelfDSN:           dsn,
-		ShelfSQLiteAdapter: sqlite.NewSQLite(dsn),
+		ShelfSQLiteAdapter: adapter,
+
+		GetSetupRequired: getSetupRequired,
 
 		PutBox:    putBox,
 		DeleteBox: deleteBox,
@@ -87,11 +94,20 @@ func NewShelf(connectionType string, dsn string) Shelf {
 		SetUserPassword: setUserPassword,
 		GetUsers:        getUsers,
 
-		GetClusters:   getClusters,
-		GetCluster:    getCluster,
-		DeleteCluster: deleteCluster,
-		PutCluster:    putCluster,
+		GetClusters:          getClusters,
+		GetCluster:           getCluster,
+		DeleteCluster:        deleteCluster,
+		PutCluster:           putCluster,
+		SetClusterConnection: setClusterConnection,
+		UpdateCluster:        updateCluster,
 	}
+}
+
+func getSetupRequired() (bool, error) {
+	if currentConnectionType == string(CONNECTION_SQLITE) {
+		return adapter.GetSetupRequired()
+	}
+	return false, fmt.Errorf("Failed to open shelf.")
 }
 
 func getBox(name string) (structs.Box, error) {
@@ -178,6 +194,13 @@ func putCluster(cluster structs.Cluster, force bool) error {
 	return fmt.Errorf("Failed to open shelf.")
 }
 
+func updateCluster(cluster structs.Cluster) error {
+	if currentConnectionType == string(CONNECTION_SQLITE) {
+		return adapter.UpdateCluster(cluster)
+	}
+	return fmt.Errorf("Failed to open shelf.")
+}
+
 func getClusters() ([]structs.Cluster, error) {
 	if currentConnectionType == string(CONNECTION_SQLITE) {
 		return adapter.GetClusters()
@@ -197,4 +220,11 @@ func deleteCluster(request structs.DeleteClusterRequest) error {
 		return adapter.DeleteCluster(request)
 	}
 	return fmt.Errorf("Failed to open shelf.")
+}
+
+func setClusterConnection(cluster structs.Cluster) (bool, error) {
+	if currentConnectionType == string(CONNECTION_SQLITE) {
+		return adapter.SetClusterConnection(cluster)
+	}
+	return false, fmt.Errorf("Failed to open shelf.")
 }

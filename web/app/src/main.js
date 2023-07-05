@@ -4,6 +4,7 @@ import './app.css';
 import Cookies from 'js-cookie'
 import router from './routes/router.js'
 import store from './stores/index'
+import { InstallCodemirro } from "codemirror-editor-vue3";
 
 const preload = async () => {
     const token = Cookies.get('x-auth-token')
@@ -21,6 +22,7 @@ const preload = async () => {
     app.use(router)
     router.app = app
     app.use(store)
+    app.use(InstallCodemirro)
     app.mount('#app');
 }
 
