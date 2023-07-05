@@ -6,7 +6,7 @@
     </div>
     <div class="p-4">
       <nav class="grid grid-cols-1 gap-1">
-        <router-link to="/" v-if="$route.name === `Dashboard`" class="p-2 flex bg-white/10 rounded-md text-white">
+        <router-link to="/" v-if="$route.name.startsWith('Dashboard')" class="p-2 flex bg-white/10 rounded-md text-white">
           <span>
             <ChartBarIcon class="h-4 w-4 mt-1"/>
           </span>
@@ -19,7 +19,7 @@
           <span class="ml-3">Dashboard</span>
         </router-link>
 
-        <router-link to="/users" v-if="$route.name === `Users`" class="p-2 flex bg-white/10 rounded-md text-white">
+        <router-link to="/users" v-if="$route.name.startsWith('Users')" class="p-2 flex bg-white/10 rounded-md text-white">
           <span>
             <UsersIcon class="h-4 w-4 mt-1"/>
           </span>
@@ -32,7 +32,7 @@
           <span class="ml-3">Users</span>
         </router-link>
 
-        <router-link to="/clusters" v-if="$route.name === `Clusters`"
+        <router-link to="/clusters" v-if="$route.name.startsWith('Clusters')"
                      class="p-2 flex bg-white/10 rounded-md text-white">
           <span>
             <ServerStackIcon class="h-4 w-4 mt-1"/>
@@ -46,7 +46,7 @@
           <span class="ml-3">Clusters</span>
         </router-link>
 
-        <router-link to="/boxes" v-if="$route.name === `Boxes`" class="p-2 flex bg-white/10 rounded-md text-white">
+        <router-link to="/boxes" v-if="$route.name.startsWith('Boxes')" class="p-2 flex bg-white/10 rounded-md text-white">
           <span>
             <CubeIcon class="h-4 w-4 mt-1"/>
           </span>
@@ -59,7 +59,7 @@
           <span class="ml-3">Boxes</span>
         </router-link>
 
-        <router-link to="/environments" v-if="$route.name === `Environments`"
+        <router-link to="/environments" v-if="$route.name.startsWith('Environments')"
                      class="p-2 flex bg-white/10 rounded-md text-white">
           <span>
             <Squares2X2Icon class="h-4 w-4 mt-1"/>

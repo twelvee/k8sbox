@@ -49,12 +49,12 @@ const router = createRouter({
         },
         {
             path: '/users/:id',
-            name: 'UserDetails',
+            name: 'Users.Details',
             component: UserDetails
         },
         {
             path: '/users/invite',
-            name: 'Invite',
+            name: 'Users.Invite',
             component: Invite
         },
         {
@@ -64,17 +64,17 @@ const router = createRouter({
         },
         {
             path: '/clusters/connect',
-            name: 'CreateCluster',
+            name: 'Clusters.Create',
             component: CreateCluster
         },
         {
             path: '/clusters/:name',
-            name: 'ClusterEdit',
+            name: 'Clusters.Edit',
             component: ClusterEdit
         },
         {
             path: '/clusters/:name/delete',
-            name: 'ClusterDelete',
+            name: 'Clusters.Delete',
             component: ClusterDelete
         },
         {
