@@ -15,12 +15,6 @@ func createSqliteTables(conn string) {
 	if err != nil {
 		panic(err)
 	}
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(db)
 	sqlStmt := `
 	create table if not exists users(
 	  	id integer not null primary key,
@@ -65,16 +59,44 @@ func createSqliteTables(conn string) {
 	  	name varchar(255) not null unique,
 	    namespace varchar(255) default 'default',
 	    user_id integer not null,
-	    cluster varchar(255) not null,
+	    cluster_name varchar(255) not null,
+	    status integer not null default 0,
 	    created_at integer(4) not null default (strftime('%s','now')),
 	    
 	    CONSTRAINT fk_user
 			FOREIGN KEY (user_id)
 			REFERENCES users (id)
 			ON DELETE CASCADE,
-	    CONSTRAINT fk_cluster
-			FOREIGN KEY (cluster)
+	    CONSTRAINT fk_cluster_name
+			FOREIGN KEY (cluster_name)
 			REFERENCES clusters (name)
+			ON DELETE CASCADE
+	);
+
+	create table if not exists environment_applications(
+	    environment_name varchar(255) not null,
+	    application_name varchar(255) not null,
+	    box_name varchar(255) not null,
+	    chart varchar(255) not null,
+	    created_at integer(4) not null default (strftime('%s','now')),
+	    CONSTRAINT fk_environment_name
+			FOREIGN KEY (environment_name)
+			REFERENCES environments (name)
+			ON DELETE CASCADE,
+	    CONSTRAINT fk_box_name
+			FOREIGN KEY (box_name)
+			REFERENCES boxes (name)
+			ON DELETE NO ACTION
+	);
+
+	create table if not exists environment_variables(
+	    environment_name varchar(255) not null,
+	    name varchar(255) not null,
+	    value text not null,
+	    created_at integer(4) not null default (strftime('%s','now')),
+	    CONSTRAINT fk_environment_name
+			FOREIGN KEY (environment_name)
+			REFERENCES environments (name)
 			ON DELETE CASCADE
 	);
 	`
@@ -82,6 +104,7 @@ func createSqliteTables(conn string) {
 	if err != nil {
 		panic(err)
 	}
+	db.Close()
 }
 
 type SQLite struct {
@@ -116,32 +139,44 @@ type SQLite struct {
 	GetClusters          func() ([]structs.Cluster, error)
 	SetClusterConnection func(cluster structs.Cluster) (bool, error)
 	UpdateCluster        func(cluster structs.Cluster) error
+
+	// Environments
+	GetEnvironment          func(request structs.GetEnvironmentRequest) (structs.Environment, error)
+	GetEnvironments         func() ([]structs.Environment, error)
+	PutEnvironment          func(environment structs.Environment, user structs.User) error
+	DeleteEnvironment       func(request structs.DeleteEnvironmentRequest) error
+	UpdateEnvironmentStatus func(request structs.UpdateEnvironmentStatusRequest) error
 }
 
 func NewSQLite(conn string) *SQLite {
 	createSqliteTables(conn)
 	return &SQLite{
-		connectionDNS:        connectionDSN,
-		CreateSQLiteTables:   createSqliteTables,
-		GetSetupRequired:     getSetupRequired,
-		CreateApplications:   createApplication,
-		CreateUser:           createUser,
-		DeleteUser:           deleteUser,
-		GetUsers:             getUsers,
-		GetUser:              getUser,
-		CheckInviteCode:      checkInviteCode,
-		SetUserPassword:      setUserPassword,
-		CreateToken:          createToken,
-		GetBox:               getBox,
-		GetBoxes:             getBoxes,
-		DeleteBox:            deleteBox,
-		PutBox:               putBox,
-		UpdateBox:            updateBox,
-		GetCluster:           getCluster,
-		GetClusters:          getClusters,
-		DeleteCluster:        deleteCluster,
-		PutCluster:           putCluster,
-		SetClusterConnection: setClusterConnection,
-		UpdateCluster:        updateCluster,
+		connectionDNS:           connectionDSN,
+		CreateSQLiteTables:      createSqliteTables,
+		GetSetupRequired:        getSetupRequired,
+		CreateApplications:      createApplication,
+		CreateUser:              createUser,
+		DeleteUser:              deleteUser,
+		GetUsers:                getUsers,
+		GetUser:                 getUser,
+		CheckInviteCode:         checkInviteCode,
+		SetUserPassword:         setUserPassword,
+		CreateToken:             createToken,
+		GetBox:                  getBox,
+		GetBoxes:                getBoxes,
+		DeleteBox:               deleteBox,
+		PutBox:                  putBox,
+		UpdateBox:               updateBox,
+		GetCluster:              getCluster,
+		GetClusters:             getClusters,
+		DeleteCluster:           deleteCluster,
+		PutCluster:              putCluster,
+		SetClusterConnection:    setClusterConnection,
+		UpdateCluster:           updateCluster,
+		GetEnvironment:          getEnvironment,
+		GetEnvironments:         getEnvironments,
+		PutEnvironment:          putEnvironment,
+		DeleteEnvironment:       deleteEnvironment,
+		UpdateEnvironmentStatus: updateEnvironmentStatus,
 	}
 }

@@ -26,7 +26,6 @@ func HandleDescribeCommand(context context.Context, modelName string, envID stri
 		fmt.Println("Environment not found")
 		os.Exit(1)
 	}
-	fmt.Printf("Id: %s\r\n", env.ID)
 	fmt.Printf("Name: %s\r\n", env.Name)
 	fmt.Printf("Namespace: %s\r\n", env.Namespace)
 	fmt.Println("------------------------------")

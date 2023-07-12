@@ -7,12 +7,11 @@ import (
 )
 
 // InitRouter will return HTTP gin router
-func InitRouter() *gin.Engine {
+func InitRouter(webAppPath string) *gin.Engine {
 	router := gin.Default()
-	//router.Static("/app/", "./web/app/dist")
-	router.Use(static.Serve("/", static.LocalFile("./web/app/dist", false)))
+	router.Use(static.Serve("/", static.LocalFile(webAppPath, false)))
 	router.NoRoute(func(c *gin.Context) {
-		c.File("./web/app/dist/index.html")
+		c.File(webAppPath + "/index.html")
 	})
 	v1 := router.Group("/api/v1")
 	initSetupRoutes(v1)
@@ -20,6 +19,7 @@ func InitRouter() *gin.Engine {
 	initUsersRoutes(v1)
 	initClustersRoutes(v1)
 	initBoxesRoutes(v1)
+	initEnvironmentsRoutes(v1)
 
 	return router
 }

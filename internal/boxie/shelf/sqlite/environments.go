@@ -5,79 +5,103 @@ import (
 	"github.com/twelvee/boxie/pkg/boxie/structs"
 )
 
-func getEnvironment(name string) (structs.Box, error) {
-	var box structs.Box
+func getEnvironment(request structs.GetEnvironmentRequest) (structs.Environment, error) {
+	var environment structs.Environment
 	db, err := sql.Open("sqlite", connectionDSN)
 	if err != nil {
-		return box, err
+		return environment, err
 	}
 	defer func(db *sql.DB) {
-		err := db.Close()
+		err = db.Close()
 		if err != nil {
 			panic(err)
 		}
 	}(db)
 
-	stmt, err := db.Prepare("select name, namespace, box_type, helm_chart, helm_values, id from boxes where name = ?")
+	stmt, err := db.Prepare("select name, namespace, user_id, cluster_name, created_at, status from environments where name = ?")
 	if err != nil {
-		return box, err
+		return environment, err
 	}
 	defer stmt.Close()
 
-	var boxID string
-
-	err = stmt.QueryRow(name).Scan(&box.Name, &box.Namespace, &box.Type, &box.Chart, &box.Values, &boxID)
+	err = stmt.QueryRow(request.Name).Scan(&environment.Name, &environment.Namespace, &environment.UserID, &environment.ClusterName, &environment.CreatedAt, &environment.Status)
 	if err != nil {
-		return box, err
+		return environment, err
 	}
 
-	stmt, err = db.Prepare("select name, chart from applications where box_id = ?")
+	// get environment applications
+	stmtApps, err := db.Prepare("select box_name, chart, created_at, application_name from environment_applications where environment_name = ?")
 	if err != nil {
-		return box, err
+		return environment, err
 	}
-	defer stmt.Close()
+	defer stmtApps.Close()
 
-	rows, err := stmt.Query(boxID)
+	rows, err := stmtApps.Query(environment.Name)
 	if err != nil {
-		return box, err
+		return environment, err
 	}
-	var applications []structs.Application
+	var applications []structs.EnvironmentApplication
 	for rows.Next() {
-		var name string
+		var boxName string
 		var chart string
+		var createdAt string
+		var appName string
 
-		err = rows.Scan(&name, &chart)
+		err = rows.Scan(&boxName, &chart, &createdAt, &appName)
 		if err != nil {
-			return box, err
+			return environment, err
 		}
-		applications = append(applications, structs.Application{Name: name, Chart: chart})
+		applications = append(applications, structs.EnvironmentApplication{BoxName: boxName, Chart: chart, EnvironmentName: environment.Name, CreatedAt: createdAt, Name: appName})
 	}
 	err = rows.Err()
 	if err != nil {
-		return box, err
+		return environment, err
+	}
+	environment.EnvironmentApplications = applications
+
+	// get environment variables
+	stmtVars, err := db.Prepare("select name, value, created_at from environment_variables where environment_name = ?")
+	if err != nil {
+		return environment, err
+	}
+	defer stmtVars.Close()
+
+	rowsVars, err := stmtVars.Query(environment.Name)
+	if err != nil {
+		return environment, err
 	}
 
-	box.Applications = applications
+	m := make(map[string]string)
+	for rowsVars.Next() {
+		var name string
+		var value string
+		// todo: make struct to fit created at field
+		var createdAt string
 
-	return box, nil
+		err = rowsVars.Scan(&name, &value, &createdAt)
+		if err != nil {
+			return environment, err
+		}
+		m[name] = value
+	}
+	err = rowsVars.Err()
+	if err != nil {
+		return environment, err
+	}
+
+	environment.VariablesMap = m
+
+	return environment, nil
 }
 
-func putEnvironment(box structs.Box, force bool) error {
+func putEnvironment(environment structs.Environment, user structs.User) error {
 	db, err := sql.Open("sqlite", connectionDSN)
 	if err != nil {
 		return err
 	}
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(db)
+	defer db.Close()
 
-	sqlStmt := "insert into boxes ('name', 'namespace', 'box_type', 'helm_chart', 'helm_values') values (?, ?, ?, ?, ?)"
-	if force {
-		sqlStmt = "insert into boxes ('name', 'namespace', 'box_type', 'helm_chart', 'helm_values') values (?, ?, ?, ?, ?) on conflict do update set namespace=?, box_type=?, helm_chart=?, helm_values=?"
-	}
+	sqlStmt := "insert into environments ('name', 'namespace', 'cluster_name', 'user_id') values (?, ?, ?, ?)"
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -87,37 +111,61 @@ func putEnvironment(box structs.Box, force bool) error {
 	if err != nil {
 		return err
 	}
-	defer func(stmt *sql.Stmt) {
-		err := stmt.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(stmt)
-	if !force {
-		_, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values)
-	} else {
-		_, err = stmt.Exec(box.Name, box.Namespace, box.Type, box.Chart, box.Values, box.Namespace, box.Type, box.Chart, box.Values)
-	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(environment.Name, environment.Namespace, environment.ClusterName, user.ID)
 	if err != nil {
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
+		err = tx.Rollback()
 		return err
 	}
+	for _, box := range environment.Boxes {
+		for k, a := range box.HelmRender {
+			err = createEnvironmentApplication(structs.EnvironmentApplication{
+				BoxName:         box.Name,
+				Chart:           a,
+				EnvironmentName: environment.Name,
+				Name:            k,
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
 
-	for _, a := range box.Applications {
-		err = createApplication(a, box.Name)
+	for k, v := range environment.VariablesMap {
+		sqlStmt = "insert into environment_variables ('name', 'value', 'environment_name') values (?, ?, ?)"
+
+		tx, err = db.Begin()
+		if err != nil {
+			return err
+		}
+		stmt, err = tx.Prepare(sqlStmt)
+		if err != nil {
+			return err
+		}
+
+		_, err = stmt.Exec(k, v, environment.Name)
+		if err != nil {
+			return err
+		}
+
+		err = tx.Commit()
 		if err != nil {
 			return err
 		}
 	}
 
+	defer stmt.Close()
+
 	return nil
 }
 
-func deleteEnvironment(name string) error {
+func updateEnvironmentStatus(request structs.UpdateEnvironmentStatusRequest) error {
 	db, err := sql.Open("sqlite", connectionDSN)
 	if err != nil {
 		return err
@@ -129,7 +177,7 @@ func deleteEnvironment(name string) error {
 		}
 	}(db)
 
-	sqlStmt := "delete from boxes where name=?"
+	sqlStmt := "update environments set status=? where name=?;"
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -145,7 +193,7 @@ func deleteEnvironment(name string) error {
 			panic(err)
 		}
 	}(stmt)
-	_, err = stmt.Exec(name)
+	_, err = stmt.Exec(request.Status, request.Name)
 	if err != nil {
 		return err
 	}
@@ -158,10 +206,10 @@ func deleteEnvironment(name string) error {
 	return nil
 }
 
-func getEnvironments() ([]structs.Box, error) {
+func deleteEnvironment(request structs.DeleteEnvironmentRequest) error {
 	db, err := sql.Open("sqlite", connectionDSN)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer func(db *sql.DB) {
 		err := db.Close()
@@ -170,56 +218,177 @@ func getEnvironments() ([]structs.Box, error) {
 		}
 	}(db)
 
-	rows, err := db.Query("select id, name, namespace, box_type, created_at as created from boxes")
+	sqlStmt := "delete from environments where name=?;"
+
+	tx, err := db.Begin()
 	if err != nil {
-		return nil, err
+		return err
+	}
+	stmt, err := tx.Prepare(sqlStmt)
+	if err != nil {
+		return err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+	_, err = stmt.Exec(request.Name)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	sqlStmt = "delete from environment_variables where environment_name=?;"
+
+	tx, err = db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err = tx.Prepare(sqlStmt)
+	if err != nil {
+		return err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+	_, err = stmt.Exec(request.Name)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	sqlStmt = "delete from environment_applications where environment_name=?;"
+
+	tx, err = db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err = tx.Prepare(sqlStmt)
+	if err != nil {
+		return err
+	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(stmt)
+	_, err = stmt.Exec(request.Name)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getEnvironments() ([]structs.Environment, error) {
+	var environments []structs.Environment
+	db, err := sql.Open("sqlite", connectionDSN)
+	if err != nil {
+		return environments, err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
+
+	rows, err := db.Query("select name, namespace, user_id, cluster_name, created_at, status from environments")
+	if err != nil {
+		return environments, err
 	}
 	defer rows.Close()
-	var boxes []structs.Box
 	for rows.Next() {
-		var boxID string
-		var name string
-		var namespace string
-		var box_type string
-		var created string
+		var environment structs.Environment
 
-		err = rows.Scan(&boxID, &name, &namespace, &box_type, &created)
+		err = rows.Scan(&environment.Name, &environment.Namespace, &environment.UserID, &environment.ClusterName, &environment.CreatedAt, &environment.Status)
 		if err != nil {
-			return nil, err
+			return environments, err
 		}
 
-		stmt, err := db.Prepare("select name, chart from applications where box_id = ?")
+		stmt, err := db.Prepare("select chart, box_name, created_at, application_name from environment_applications where environment_name = ?")
 		if err != nil {
-			return nil, err
+			return environments, err
 		}
 		defer stmt.Close()
 
-		appRows, err := stmt.Query(boxID)
+		appRows, err := stmt.Query(environment.Name)
 		if err != nil {
-			return nil, err
+			return environments, err
 		}
 
-		var applications []structs.Application
+		var applications []structs.EnvironmentApplication
 		for appRows.Next() {
-			var name string
-			var chart string
-
-			err = rows.Scan(&name, &chart)
+			var envApp structs.EnvironmentApplication
+			err = appRows.Scan(&envApp.Chart, &envApp.BoxName, &envApp.CreatedAt, &envApp.Name)
 			if err != nil {
-				return nil, err
+				return environments, err
 			}
-			applications = append(applications, structs.Application{Name: name, Chart: chart})
+			envApp.EnvironmentName = environment.Name
+			applications = append(applications, envApp)
 		}
-		err = rows.Err()
+		err = appRows.Err()
 		if err != nil {
-			return nil, err
+			return environments, err
 		}
-		boxes = append(boxes, structs.Box{Name: name, Namespace: namespace, Type: box_type, Created: created, Applications: applications})
+		environment.EnvironmentApplications = applications
+
+		// get environment variables
+		varsStmt, err := db.Prepare("select name, value, created_at from environment_variables where environment_name = ?")
+		if err != nil {
+			return environments, err
+		}
+		defer varsStmt.Close()
+
+		varsRows, err := varsStmt.Query(environment.Name)
+		if err != nil {
+			return environments, err
+		}
+
+		m := make(map[string]string)
+		for varsRows.Next() {
+			var name string
+			var value string
+			// todo: make struct to fit created at field
+			var createdAt string
+
+			err = varsRows.Scan(&name, &value, &createdAt)
+			if err != nil {
+				return environments, err
+			}
+			m[name] = value
+		}
+		err = varsRows.Err()
+		if err != nil {
+			return environments, err
+		}
+		environment.VariablesMap = m
+
+		environments = append(environments, environment)
 	}
 	err = rows.Err()
 	if err != nil {
-		return nil, err
+		return environments, err
 	}
 
-	return boxes, nil
+	return environments, nil
 }

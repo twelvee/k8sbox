@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/twelvee/boxie/internal/boxie"
 	"github.com/twelvee/boxie/pkg/boxie/structs"
-	"github.com/twelvee/boxie/pkg/boxie/utils"
 	"os"
 	"strings"
 
@@ -48,13 +47,7 @@ func HandleRunCommand(context context.Context, args RunArguments) {
 		boxes = append(boxes, b)
 	}
 
-	envID := args.ID
-	if len(strings.TrimSpace(envID)) == 0 {
-		envID = utils.GetShortID(6)
-	}
-
 	environment := structs.Environment{
-		ID:           envID,
 		Name:         args.Name,
 		Namespace:    args.Namespace,
 		Boxes:        boxes,

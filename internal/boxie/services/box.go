@@ -148,14 +148,12 @@ func validateBoxes(boxes []structs.Box) error {
 
 func installBox(box *structs.Box, environment structs.Environment) ([]*runtime.Object, error) {
 	var objects []*runtime.Object
-
 	r := utils.ConvertHelmRenderToYaml(box.HelmRender)
 	for _, rend := range r {
 		obj, err := utils.CreateRuntimeObject(rend)
 		if err != nil {
 			return nil, err
 		}
-
 		mapping, err := utils.CreateRestMapper(k8sclient, obj)
 		if err != nil {
 			return nil, err
@@ -227,7 +225,7 @@ func describeBoxApplications(environment structs.Environment, box structs.Box) e
 		if err != nil {
 			return err
 		}
-		var describeFunc func(*kubernetes.Clientset, string, string) error
+		var describeFunc func(*kubernetes.Clientset, string, string) (structs.ApplicationRuntimeData, error)
 		switch kind := obj.GetObjectKind().GroupVersionKind().Kind; kind {
 		case structs.KIND_POD:
 			describeFunc = describePod
@@ -262,7 +260,8 @@ func describeBoxApplications(environment structs.Environment, box structs.Box) e
 			return err
 		}
 		if describeFunc != nil {
-			err = describeFunc(k8sclient, box.Namespace, name)
+			//TODO: Replace with rt data formatter
+			_, err = describeFunc(k8sclient, box.Namespace, name)
 			if err != nil {
 				return err
 			}

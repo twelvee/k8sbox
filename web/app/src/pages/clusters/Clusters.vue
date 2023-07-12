@@ -14,7 +14,7 @@
           <div class="overflow-y-auto h-screen">
             <div class="w-full grid grid-cols-4 gap-6" v-if="getClusters">
 
-              <div v-for="[key, cluster] in getClusters">
+              <div v-for="cluster in clusters">
                 <router-link :to="'/clusters/'+cluster.Name" class="block rounded-lg border-[1px] border-white/10 p-4 hover:border-primary/50 cursor-pointer">
                   <div class="flex items-center">
                     <div class="m-0 p-0">
@@ -24,17 +24,20 @@
                   </div>
 
                   <ul class="mt-4 space-y-2">
-                    <li>
-                      <a
-                          href="#"
+                    <li v-if="cluster.LastDeployment">
+                      <router-link
+                          :to="'/environments/'+cluster.LastDeployment.Name"
                           class="block h-full text-white/70 hover:text-white rounded-lg border border-white/5 p-4 hover:border-primary/20"
                       >
                         <strong class="font-medium">Last deployment</strong>
 
-                        <p class="mt-1 text-xs font-medium">
+                        <p class="mt-1 text-xs font-medium" v-if="!cluster.LastDeployment">
                           Unknown
                         </p>
-                      </a>
+                        <p class="mt-1 text-xs font-medium" v-else>
+                          {{cluster.LastDeploymentTime}} by {{cluster.LastDeployedUser.Name}}
+                        </p>
+                      </router-link>
                     </li>
                   </ul>
                 </router-link>
@@ -53,14 +56,57 @@ import {format} from "date-fns";
 </script>
 <script lang="ts">
 import {mapGetters} from "vuex";
+import {isProxy, toRaw} from "vue";
+import {differenceInMinutes} from "date-fns";
 
 export default {
   computed: {
-    ...mapGetters(['getClusters'])
+    ...mapGetters(['getClusters', 'getEnvironments', 'getUsers']),
+    clusters() {
+      if (this.getClusters.size === 0) {
+        return null
+      }
+      const self = this
+      return Array.from(this.getClusters).map((cl) => {
+        if (isProxy(cl[1])) {
+          cl[1] = toRaw(cl[1])
+        }
+        let lastEnvironment = null;
+        this.getEnvironments.forEach((env) => {
+          if (lastEnvironment == null &&  env.ClusterName == cl[1].Name) {
+            lastEnvironment = env
+            return
+          }
+          if (env.CreatedAt > lastEnvironment.CreatedAt && env.ClusterName == cl[1].Name) {
+            lastEnvironment = env
+          }
+        })
+        if (lastEnvironment != null) {
+          let diffInTime = differenceInMinutes(new Date(), new Date(lastEnvironment.CreatedAt * 1000))
+          if (diffInTime <= 60) {
+            cl[1].LastDeploymentTime = diffInTime + 'm'
+          } else if (diffInTime > 60 && diffInTime <= 60*24) {
+            cl[1].LastDeploymentTime = Math.round(diffInTime/60) + 'h'
+          } else {
+            cl[1].LastDeploymentTime = Math.round(diffInTime/(60*24)) + 'd'
+          }
+          cl[1].LastDeployedUser = self.$store.getters.getUserById(lastEnvironment.UserID)
+        }
+        cl[1].LastDeployment = lastEnvironment
+
+        return cl[1]
+      })
+    }
   },
   async mounted() {
     if (this.getClusters.size == 0) {
       await this.$store.dispatch('getClusters')
+    }
+    if (this.getEnvironments.size == 0) {
+      await this.$store.dispatch('getEnvironments')
+    }
+    if (this.getUsers.size == 0) {
+      await this.$store.dispatch('getUsers')
     }
   }
 }

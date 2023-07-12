@@ -51,6 +51,13 @@ type Shelf struct {
 	DeleteCluster        func(request structs.DeleteClusterRequest) error
 	SetClusterConnection func(cluster structs.Cluster) (bool, error)
 	UpdateCluster        func(cluster structs.Cluster) error
+
+	// Environments
+	GetEnvironment          func(request structs.GetEnvironmentRequest) (structs.Environment, error)
+	GetEnvironments         func() ([]structs.Environment, error)
+	PutEnvironment          func(environment structs.Environment, user structs.User) error
+	DeleteEnvironment       func(request structs.DeleteEnvironmentRequest) error
+	UpdateEnvironmentStatus func(request structs.UpdateEnvironmentStatusRequest) error
 }
 
 var adapter *sqlite.SQLite
@@ -102,6 +109,12 @@ func NewShelf(connectionType string, dsn string) Shelf {
 		PutCluster:           putCluster,
 		SetClusterConnection: setClusterConnection,
 		UpdateCluster:        updateCluster,
+
+		GetEnvironment:          getEnvironment,
+		GetEnvironments:         getEnvironments,
+		DeleteEnvironment:       deleteEnvironment,
+		PutEnvironment:          putEnvironment,
+		UpdateEnvironmentStatus: updateEnvironmentStatus,
 	}
 }
 
@@ -236,4 +249,39 @@ func setClusterConnection(cluster structs.Cluster) (bool, error) {
 		return adapter.SetClusterConnection(cluster)
 	}
 	return false, fmt.Errorf("Failed to open shelf.")
+}
+
+func getEnvironment(request structs.GetEnvironmentRequest) (structs.Environment, error) {
+	if currentConnectionType == string(CONNECTION_SQLITE) {
+		return adapter.GetEnvironment(request)
+	}
+	return structs.Environment{}, fmt.Errorf("Failed to open shelf.")
+}
+
+func getEnvironments() ([]structs.Environment, error) {
+	if currentConnectionType == string(CONNECTION_SQLITE) {
+		return adapter.GetEnvironments()
+	}
+	return nil, fmt.Errorf("Failed to open shelf.")
+}
+
+func deleteEnvironment(request structs.DeleteEnvironmentRequest) error {
+	if currentConnectionType == string(CONNECTION_SQLITE) {
+		return adapter.DeleteEnvironment(request)
+	}
+	return fmt.Errorf("Failed to open shelf.")
+}
+
+func putEnvironment(environment structs.Environment, user structs.User) error {
+	if currentConnectionType == string(CONNECTION_SQLITE) {
+		return adapter.PutEnvironment(environment, user)
+	}
+	return fmt.Errorf("Failed to open shelf.")
+}
+
+func updateEnvironmentStatus(request structs.UpdateEnvironmentStatusRequest) error {
+	if currentConnectionType == string(CONNECTION_SQLITE) {
+		return adapter.UpdateEnvironmentStatus(request)
+	}
+	return fmt.Errorf("Failed to open shelf.")
 }

@@ -4,7 +4,7 @@ import Dashboard from "../pages/Dashboard.vue";
 import Users from "../pages/users/Users.vue";
 import Clusters from "../pages/clusters/Clusters.vue";
 import Boxes from "../pages/boxes/Boxes.vue";
-import Environments from "../pages/Environments.vue";
+import Environments from "../pages/environments/Environments.vue";
 import Invite from "../pages/users/Invite.vue";
 import store from "../stores";
 import RedeemCode from "../pages/authorization/RedeemCode.vue";
@@ -17,6 +17,9 @@ import ClusterDelete from "../pages/clusters/ClusterDelete.vue";
 import CreateBox from "../pages/boxes/CreateBox.vue";
 import EditBox from "../pages/boxes/EditBox.vue";
 import DeleteBox from "../pages/boxes/DeleteBox.vue";
+import CreateEnvironment from "../pages/environments/CreateEnvironment.vue";
+import EnvironmentDetails from "../pages/environments/EnvironmentDetails.vue";
+import DeleteEnvironment from "../pages/environments/DeleteEnvironment.vue";
 
 const router = createRouter({
     routes: [
@@ -104,6 +107,21 @@ const router = createRouter({
             path: '/environments',
             name: 'Environments',
             component: Environments
+        },
+        {
+            path: '/environments/create',
+            name: 'Environments.Create',
+            component: CreateEnvironment
+        },
+        {
+            path: '/environments/:name',
+            name: 'Environments.Details',
+            component: EnvironmentDetails
+        },
+        {
+            path: '/environments/:name/delete',
+            name: 'Environments.Delete',
+            component: DeleteEnvironment
         }
     ],
     history: createWebHistory()

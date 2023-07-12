@@ -116,7 +116,7 @@ func updateConfigMap(configMap *corev1.ConfigMap, savedEnvironments []structs.En
 		if err != nil {
 			return err
 		}
-		newBinaryData[e.ID] = nbd
+		newBinaryData[e.Name] = nbd
 	}
 
 	apiVersion, kind := "v1", "ConfigMap"
@@ -163,7 +163,7 @@ func isEnvironmentSaved(environment structs.Environment) (bool, error) {
 }
 
 func isEnvironmentSavedToFilesystem(environment structs.Environment) (bool, error) {
-	return utils.IsEnvironmentSaved(environment.ID)
+	return utils.IsEnvironmentSaved(environment.Name)
 }
 
 func isEnvironmentSavedToVolume(environment structs.Environment) (bool, error) {
@@ -177,7 +177,7 @@ func isEnvironmentSavedToVolume(environment structs.Environment) (bool, error) {
 	}
 	currentEnvironment := -1
 	for i, env := range savedEnvironments {
-		if env.ID == environment.ID {
+		if env.Name == environment.Name {
 			currentEnvironment = i
 			break
 		}
@@ -201,7 +201,7 @@ func deleteSavedEnvironment(environment structs.Environment) error {
 }
 
 func deleteEnvironmentFromFilesystem(environment structs.Environment) error {
-	return utils.RemoveEnvironment(environment.ID)
+	return utils.RemoveEnvironment(environment.Name)
 }
 
 func deleteEnvironmentFromVolume(environment structs.Environment) error {
@@ -215,7 +215,7 @@ func deleteEnvironmentFromVolume(environment structs.Environment) error {
 	}
 	var newSavedEnvironments []structs.Environment
 	for _, env := range savedEnvironments {
-		if env.ID != environment.ID {
+		if env.Name != environment.Name {
 			newSavedEnvironments = append(newSavedEnvironments, env)
 		}
 	}
@@ -235,7 +235,7 @@ func deleteSavedBox(environment structs.Environment, box structs.Box) error {
 }
 
 func deleteBoxFromFilesystem(environment structs.Environment, box structs.Box) error {
-	return utils.RemoveBox(box, environment.ID)
+	return utils.RemoveBox(box, environment.Name)
 }
 
 func deleteBoxFromVolume(environment structs.Environment, box structs.Box) error {
@@ -249,7 +249,7 @@ func deleteBoxFromVolume(environment structs.Environment, box structs.Box) error
 	}
 	currentEnvironment := -1
 	for i, env := range savedEnvironments {
-		if env.ID == environment.ID {
+		if env.Name == environment.Name {
 			currentEnvironment = i
 			break
 		}

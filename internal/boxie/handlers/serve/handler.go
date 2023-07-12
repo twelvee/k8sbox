@@ -9,8 +9,8 @@ import (
 )
 
 // HandleServeCommand is the boxie serve command handler
-func HandleServeCommand(context context.Context, host string, port string) {
-	engine := routes.InitRouter()
+func HandleServeCommand(context context.Context, host string, port string, static string) {
+	engine := routes.InitRouter(static)
 	engine.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",

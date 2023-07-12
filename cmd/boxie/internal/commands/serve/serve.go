@@ -12,6 +12,7 @@ func NewServeCommand() *cobra.Command {
 		command *cobra.Command
 		host    string
 		port    string
+		static  string
 	)
 	command = &cobra.Command{
 		Use:     "serve",
@@ -19,12 +20,13 @@ func NewServeCommand() *cobra.Command {
 		Long:    "Launches the Boxie in server mode, as well as running the UI interface for convenient use.",
 		Example: getExample(),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			serve.HandleServeCommand(command.Context(), host, port)
+			serve.HandleServeCommand(command.Context(), host, port, static)
 			return nil
 		},
 	}
 	command.Flags().StringVarP(&port, "port", "p", "8888", "Server port.")
 	command.Flags().StringVarP(&host, "addr", "a", "0.0.0.0", "Server host.")
+	command.Flags().StringVarP(&static, "static", "s", "./web/app/dist", "Web app folder.")
 
 	return command
 }
