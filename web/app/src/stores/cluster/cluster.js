@@ -32,7 +32,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/clusters', {
+                const response = await fetch(window.location.origin+'/api/v1/clusters', {
                     method: 'GET',
                     headers: {
                         'x-auth-token': token,
@@ -53,7 +53,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/clusters/'+payload.Name, {
+                const response = await fetch(window.location.origin+'/api/v1/clusters/'+payload.Name, {
                     method: 'DELETE',
                     headers: {
                         'x-auth-token': token,
@@ -79,7 +79,7 @@ export default {
                 const body = JSON.stringify({
                     Name: payload.Name,
                 })
-                const response = await fetch('http://localhost:8888/api/v1/clusters/'+payload.Name, {
+                const response = await fetch(window.location.origin+'/api/v1/clusters/'+payload.Name, {
                     method: 'GET',
                     headers: {
                         'x-auth-token': token,
@@ -104,7 +104,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/clusters', {
+                const response = await fetch(window.location.origin+'/api/v1/clusters', {
                     method: 'POST',
                     headers: {
                         'x-auth-token': token,
@@ -136,7 +136,7 @@ export default {
                     Name: payload.Name,
                     Kubeconfig: payload.Kubeconfig
                 })
-                const response = await fetch('http://localhost:8888/api/v1/clusters/'+payload.Name, {
+                const response = await fetch(window.location.origin+'/api/v1/clusters/'+payload.Name, {
                     method: 'PUT',
                     headers: {
                         'x-auth-token': token,
@@ -160,7 +160,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/clusters/test', {
+                const response = await fetch(window.location.origin+'/api/v1/clusters/test', {
                     method: 'POST',
                     headers: {
                         'x-auth-token': token,

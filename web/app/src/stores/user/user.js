@@ -42,7 +42,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/users', {
+                const response = await fetch(window.location.origin+'/api/v1/users', {
                     method: 'GET',
                     headers: {
                         'x-auth-token': token,
@@ -64,7 +64,7 @@ export default {
                     password: payload.password,
                     password_confirmation: payload.password_confirmation
                 })
-                const response = await fetch('http://localhost:8888/api/v1/user', {
+                const response = await fetch(window.location.origin+'/api/v1/user', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json;charset=utf-8',
@@ -85,7 +85,7 @@ export default {
                     email: payload.email,
                     password: payload.password,
                 })
-                const response = await fetch('http://localhost:8888/api/v1/user', {
+                const response = await fetch(window.location.origin+'/api/v1/user', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json;charset=utf-8',
@@ -109,7 +109,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/user', {
+                const response = await fetch(window.location.origin+'/api/v1/user', {
                     method: 'GET',
                     headers: {
                         'x-auth-token': token,
@@ -126,7 +126,7 @@ export default {
         },
         async checkIsSetupRequired(context) {
             try {
-                const response = await fetch('http://localhost:8888/api/v1/setup_required', {
+                const response = await fetch(window.location.origin+'/api/v1/setup_required', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json;charset=utf-8',
@@ -147,7 +147,7 @@ export default {
                     name: payload.name,
                     email: payload.email
                 })
-                const response = await fetch('http://localhost:8888/api/v1/user/create_first', {
+                const response = await fetch(window.location.origin+'/api/v1/user/create_first', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json;charset=utf-8',
@@ -173,7 +173,7 @@ export default {
                     name: payload.name,
                     email: payload.email
                 })
-                const response = await fetch('http://localhost:8888/api/v1/user/create', {
+                const response = await fetch(window.location.origin+'/api/v1/user/create', {
                     method: 'POST',
                     headers: {
                         'x-auth-token': token,

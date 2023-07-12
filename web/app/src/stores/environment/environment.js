@@ -33,7 +33,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/environments', {
+                const response = await fetch(window.location.origin+'/api/v1/environments', {
                     method: 'GET',
                     headers: {
                         'x-auth-token': token,
@@ -54,7 +54,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/environments/'+payload.Name, {
+                const response = await fetch(window.location.origin+'/api/v1/environments/'+payload.Name, {
                     method: 'DELETE',
                     headers: {
                         'x-auth-token': token,
@@ -80,7 +80,7 @@ export default {
                 const body = JSON.stringify({
                     Name: payload.Name,
                 })
-                const response = await fetch('http://localhost:8888/api/v1/environments/'+payload.Name, {
+                const response = await fetch(window.location.origin+'/api/v1/environments/'+payload.Name, {
                     method: 'GET',
                     headers: {
                         'x-auth-token': token,
@@ -105,7 +105,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/environments', {
+                const response = await fetch(window.location.origin+'/api/v1/environments', {
                     method: 'POST',
                     headers: {
                         'x-auth-token': token,

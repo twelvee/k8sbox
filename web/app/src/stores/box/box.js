@@ -32,7 +32,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/boxes', {
+                const response = await fetch(window.location.origin+'/api/v1/boxes', {
                     method: 'GET',
                     headers: {
                         'x-auth-token': token,
@@ -53,7 +53,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/boxes/'+payload.Name, {
+                const response = await fetch(window.location.origin+'/api/v1/boxes/'+payload.Name, {
                     method: 'DELETE',
                     headers: {
                         'x-auth-token': token,
@@ -79,7 +79,7 @@ export default {
                 const body = JSON.stringify({
                     Name: payload.Name,
                 })
-                const response = await fetch('http://localhost:8888/api/v1/boxes/'+payload.Name, {
+                const response = await fetch(window.location.origin+'/api/v1/boxes/'+payload.Name, {
                     method: 'GET',
                     headers: {
                         'x-auth-token': token,
@@ -104,7 +104,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/boxes', {
+                const response = await fetch(window.location.origin+'/api/v1/boxes', {
                     method: 'POST',
                     headers: {
                         'x-auth-token': token,
@@ -129,7 +129,7 @@ export default {
                 throw "Token undefined."
             }
             try {
-                const response = await fetch('http://localhost:8888/api/v1/boxes/'+payload.Name, {
+                const response = await fetch(window.location.origin+'/api/v1/boxes/'+payload.Name, {
                     method: 'PUT',
                     headers: {
                         'x-auth-token': token,
