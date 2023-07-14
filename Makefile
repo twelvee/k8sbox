@@ -38,7 +38,6 @@ vendor:
 build:
 	@rm ${PWD}/bin/${APP_NAME} || true
 	@docker run --rm \
-		--platform=linux/amd64 \
 		-v ${PWD}:/project \
 		-w /project \
 		-e GOOS=${GOOS} \

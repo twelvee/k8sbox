@@ -86,8 +86,8 @@ func RunEnvironment(environment structs.Environment) error {
 	return nil
 }
 
-// DeleteEnvironmentByID will delete saved environment by environmentID
-func DeleteEnvironmentByID(namespace string, environmentName string) error {
+// DeleteEnvironmentByName will delete saved environment by its name
+func DeleteEnvironmentByName(namespace string, environmentName string) error {
 	environment, err := boxie.GetStorageService().GetEnvironment(namespace, environmentName)
 	if err != nil {
 		return err
