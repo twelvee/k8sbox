@@ -7,25 +7,28 @@ import (
 
 // Box is your box in a struct
 type Box struct {
-	Type         string            `toml:"type"`
-	Applications []Application     `toml:"applications"`
-	Chart        string            `toml:"chart"`
-	Values       string            `toml:"values"`
-	Namespace    string            `toml:"namespace"`
-	Name         string            `toml:"name"`
-	HelmRender   map[string]string `toml:"-"`
-	Created      string            `toml:"-"`
+	Type              string            `toml:"type"`
+	Applications      []Application     `toml:"applications"`
+	Chart             string            `toml:"chart"`
+	Values            string            `toml:"values"`
+	VariablesLocation string            `toml:"variables"`
+	Variables         map[string]string `toml:"-"`
+	Namespace         string            `toml:"namespace"`
+	Name              string            `toml:"name"`
+	HelmRender        map[string]string `toml:"-"`
+	Created           string            `toml:"-"`
 }
 
 // BoxService is a public BoxService
 type BoxService struct {
-	InstallBox              func(*Box, Environment) ([]*runtime.Object, error)
-	ProcessEnvValues        func(map[string]interface{}, Environment) map[string]interface{}
-	ValidateBoxes           func([]Box) error
-	FillEmptyFields         func(Environment, *Box) error
-	UninstallBox            func(Environment, Box) ([]*runtime.Object, error)
-	DescribeBoxApplications func(Environment, Box) error
-	ExpandBoxVariables      func([]Box) []Box
+	InstallBox                  func(*Box, Environment) ([]*runtime.Object, error)
+	ProcessEnvironmentEnvValues func(map[string]interface{}, Environment) map[string]interface{}
+	ProcessBoxEnvValues         func(map[string]interface{}, Box) map[string]interface{}
+	ValidateBoxes               func([]Box) error
+	FillEmptyFields             func(Environment, *Box) error
+	UninstallBox                func(Environment, Box) ([]*runtime.Object, error)
+	DescribeBoxApplications     func(Environment, Box) error
+	ExpandBoxVariables          func([]Box) []Box
 }
 
 // Helm is helm string getter

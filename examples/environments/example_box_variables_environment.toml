@@ -1,0 +1,24 @@
+name = "123-environment"
+namespace = "test"
+
+[[boxes]]
+type = "helm"
+chart = "${PWD}/examples/environments/box1"
+values = "${PWD}/examples/environments/box1/Values.yaml"
+name = "first-box-2"
+variables = "${PWD}/examples/environments/box1/.env"
+
+[[boxes]]
+type = "helm"
+chart = "${PWD}/examples/environments/box2"
+values = "${PWD}/examples/environments/box2/Values.yaml"
+name = "second-box-2"
+variables = "${PWD}/examples/environments/box2/.env"
+
+[[boxes]]
+type = "helm"
+chart = "${PWD}/examples/environments/ingress"
+name = "third-box"
+values = "${PWD}/examples/environments/ingress/Values.yaml"
+variables = "${PWD}/examples/environments/ingress/.env"
+

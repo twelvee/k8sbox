@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"os"
 	"strings"
 
@@ -23,12 +24,13 @@ import (
 // NewBoxService creates a new BoxService
 func NewBoxService() structs.BoxService {
 	return structs.BoxService{
-		ProcessEnvValues:        processEnvValues,
-		ValidateBoxes:           validateBoxes,
-		FillEmptyFields:         fillEmptyFields,
-		UninstallBox:            uninstallBox,
-		DescribeBoxApplications: describeBoxApplications,
-		ExpandBoxVariables:      expandBoxVariables,
+		ProcessEnvironmentEnvValues: processEnvironmentEnvValues,
+		ProcessBoxEnvValues:         processBoxEnvValues,
+		ValidateBoxes:               validateBoxes,
+		FillEmptyFields:             fillEmptyFields,
+		UninstallBox:                uninstallBox,
+		DescribeBoxApplications:     describeBoxApplications,
+		ExpandBoxVariables:          expandBoxVariables,
 	}
 }
 
@@ -80,8 +82,11 @@ func createHelmRenders(environment structs.Environment, box *structs.Box) error 
 	}
 	e := engine.New(restConfig)
 	var replacedValues map[string]interface{}
+	if len(strings.TrimSpace(box.VariablesLocation)) != 0 || box.Variables != nil {
+		replacedValues = processBoxEnvValues(chart.Values, *box)
+	}
 	if len(strings.TrimSpace(environment.Variables)) != 0 || environment.VariablesMap != nil {
-		replacedValues = processEnvValues(chart.Values, environment)
+		replacedValues = processEnvironmentEnvValues(chart.Values, environment)
 	}
 	vals, err := chartutil.ToRenderValues(chart, replacedValues, releaseOptions, nil)
 	if err != nil {
@@ -95,7 +100,7 @@ func createHelmRenders(environment structs.Environment, box *structs.Box) error 
 	return nil
 }
 
-func processEnvValues(values map[string]interface{}, environment structs.Environment) map[string]interface{} {
+func processEnvironmentEnvValues(values map[string]interface{}, environment structs.Environment) map[string]interface{} {
 	if len(environment.Variables) > 0 {
 		err := godotenv.Load(environment.Variables)
 		if err != nil {
@@ -119,11 +124,60 @@ func processEnvValues(values map[string]interface{}, environment structs.Environ
 	return values
 }
 
+func processBoxEnvValues(values map[string]interface{}, box structs.Box) map[string]interface{} {
+	replacedVariables := make(map[string]string)
+	if len(box.VariablesLocation) > 0 {
+		err := godotenv.Load(box.VariablesLocation)
+		if err != nil {
+			panic(err)
+		}
+		f, err := os.ReadFile(box.VariablesLocation)
+		if err != nil {
+			panic(err)
+		}
+		replacedVariables, err = godotenv.Unmarshal(string(f))
+		if err != nil {
+			panic(err)
+		}
+	}
+	if box.Variables != nil {
+		for k, v := range box.Variables {
+			err := os.Setenv(k, v)
+			if err != nil {
+				panic(err)
+			}
+			replacedVariables[k] = v
+		}
+	}
+	for k, v := range values {
+		if len(os.ExpandEnv(fmt.Sprintf("%v", v))) == 0 {
+			continue
+		}
+		values[k] = os.ExpandEnv(fmt.Sprintf("%v", v))
+	}
+
+	for k, _ := range replacedVariables {
+		err := os.Unsetenv(k)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return values
+}
+
 func validateBoxes(boxes []structs.Box) error {
 	var messages []string
 	for index, box := range boxes {
 		if len(strings.TrimSpace(box.Type)) == 0 {
 			messages = append(messages, fmt.Sprintf("-> Box %d: Type is missing", index))
+		}
+
+		if len(box.Name) > 0 {
+			if len(validation.IsDNS1123Label(box.Name)) > 0 {
+				for _, msg := range validation.IsDNS1123Label(box.Name) {
+					messages = append(messages, fmt.Sprintf("-> Box %d: Name: %s", index, msg))
+				}
+			}
 		}
 
 		if len(strings.TrimSpace(box.Chart)) == 0 {
@@ -277,6 +331,7 @@ func expandBoxVariables(boxes []structs.Box) []structs.Box {
 	for _, b := range boxes {
 		b.Name = os.ExpandEnv(b.Name)
 		b.Namespace = os.ExpandEnv(b.Namespace)
+		b.VariablesLocation = os.ExpandEnv(b.VariablesLocation)
 		b.Type = os.ExpandEnv(b.Type)
 		b.Values = os.ExpandEnv(b.Values)
 		b.Chart = os.ExpandEnv(b.Chart)
