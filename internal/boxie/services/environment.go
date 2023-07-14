@@ -8,6 +8,7 @@ import (
 	"github.com/twelvee/boxie/pkg/boxie/utils"
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/chartutil"
+	"k8s.io/apimachinery/pkg/util/validation"
 
 	"os"
 	"strings"
@@ -99,7 +100,10 @@ func createNamespaceIfNotExists(namespace string) error {
 }
 
 func deployEnvironment(environment *structs.Environment) error {
-	saveEnvironment(*environment)
+	err := saveEnvironment(*environment)
+	if err != nil {
+		return err
+	}
 	for _, box := range environment.Boxes {
 		_, err := installBox(&box, *environment)
 		if err != nil {
@@ -115,6 +119,20 @@ func validateEnvironment(environment *structs.Environment) error {
 
 	if len(strings.TrimSpace(environment.Name)) == 0 {
 		messages = append(messages, "Environment name is missing")
+	}
+
+	if len(validation.IsDNS1123Label(environment.Name)) != 0 {
+		for _, e := range validation.IsDNS1123Label(environment.Name) {
+			messages = append(messages, "Environment name: "+e)
+		}
+	}
+
+	if len(strings.TrimSpace(environment.Namespace)) > 0 {
+		if len(validation.IsDNS1123Label(environment.Namespace)) != 0 {
+			for _, e := range validation.IsDNS1123Label(environment.Namespace) {
+				messages = append(messages, "Environment namespace: "+e)
+			}
+		}
 	}
 
 	if len(strings.TrimSpace(environment.Variables)) > 0 {
