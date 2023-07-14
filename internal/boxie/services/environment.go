@@ -6,7 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/twelvee/boxie/pkg/boxie/utils"
+	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/chartutil"
+	"k8s.io/apimachinery/pkg/util/validation"
+
 	"os"
 	"strings"
 
@@ -28,12 +31,13 @@ func NewEnvironmentService() structs.EnvironmentService {
 		ExpandVariables:            expandVariables,
 		PrepareToWorkWithNamespace: prepareToWorkWithNamespace,
 		CreateTempDir:              createTempDir,
+		CreateTempKubeconfig:       createTempKubeconfig,
+		FillWithRuntimeData:        fillWithRuntimeData,
 	}
 }
 
 func expandVariables(environment *structs.Environment) {
 	environment.Name = os.ExpandEnv(environment.Name)
-	environment.ID = os.ExpandEnv(environment.ID)
 	environment.Namespace = os.ExpandEnv(environment.Namespace)
 	environment.Variables = os.ExpandEnv(environment.Variables)
 }
@@ -56,19 +60,22 @@ var k8sclient *kubernetes.Clientset
 var restConfig *rest.Config
 
 // GetConfigFromKubeconfig is loading your Kubeconfig into configuration struct
-func GetConfigFromKubeconfig(namespace string) *rest.Config {
-	restClientGetter := kube.GetConfig(os.Getenv("KUBECONFIG"), "", namespace)
+func GetConfigFromKubeconfig(namespace string, kubeconfig string) (*rest.Config, error) {
+	restClientGetter := kube.GetConfig(kubeconfig, "", namespace)
 	rc, err := restClientGetter.ToRESTConfig()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-
-	return rc
+	return rc, nil
 }
 
-func prepareToWorkWithNamespace(namespace string) error {
-	restConfig = GetConfigFromKubeconfig(namespace)
-	cl, err := kubernetes.NewForConfig(restConfig)
+func prepareToWorkWithNamespace(namespace string, kubeconfig string) error {
+	rc, err := GetConfigFromKubeconfig(namespace, kubeconfig)
+	if err != nil {
+		return err
+	}
+	restConfig = rc
+	cl, err := kubernetes.NewForConfig(rc)
 	k8sclient = cl
 	if err != nil {
 		return err
@@ -93,7 +100,10 @@ func createNamespaceIfNotExists(namespace string) error {
 }
 
 func deployEnvironment(environment *structs.Environment) error {
-	saveEnvironment(*environment)
+	err := saveEnvironment(*environment)
+	if err != nil {
+		return err
+	}
 	for _, box := range environment.Boxes {
 		_, err := installBox(&box, *environment)
 		if err != nil {
@@ -106,12 +116,23 @@ func deployEnvironment(environment *structs.Environment) error {
 
 func validateEnvironment(environment *structs.Environment) error {
 	var messages []string
-	if len(strings.TrimSpace(environment.ID)) == 0 {
-		messages = append(messages, "Environment id is missing")
-	}
 
 	if len(strings.TrimSpace(environment.Name)) == 0 {
 		messages = append(messages, "Environment name is missing")
+	}
+
+	if len(validation.IsDNS1123Label(environment.Name)) != 0 {
+		for _, e := range validation.IsDNS1123Label(environment.Name) {
+			messages = append(messages, "Environment name: "+e)
+		}
+	}
+
+	if len(strings.TrimSpace(environment.Namespace)) > 0 {
+		if len(validation.IsDNS1123Label(environment.Namespace)) != 0 {
+			for _, e := range validation.IsDNS1123Label(environment.Namespace) {
+				messages = append(messages, "Environment namespace: "+e)
+			}
+		}
 	}
 
 	if len(strings.TrimSpace(environment.Variables)) > 0 {
@@ -166,6 +187,43 @@ func createTempDir(environment *structs.Environment) error {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func createTempKubeconfig(environment structs.Environment, cluster structs.Cluster) (string, error) {
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if len(strings.TrimSpace(environment.ClusterName)) != 0 {
+		tempConfigPath := "/tmp/kubeconfig_" + utils.GetShortID(6)
+		err := os.WriteFile(tempConfigPath, []byte(cluster.Kubeconfig), 0644)
+		if err != nil {
+			return kubeconfig, err
+		}
+		kubeconfig = tempConfigPath
+	}
+	return kubeconfig, nil
+}
+
+func fillWithRuntimeData(env *structs.Environment) error {
+	for i, app := range env.EnvironmentApplications {
+		var kindAndName struct {
+			Kind     string
+			Metadata struct {
+				Name string
+			}
+		}
+		err := yaml.Unmarshal([]byte(app.Chart), &kindAndName)
+		if err != nil {
+			return err
+		}
+		data, err := describe(k8sclient, kindAndName.Kind, env.Namespace, kindAndName.Metadata.Name)
+		if err != nil {
+			return err
+		}
+		env.EnvironmentApplications[i].RuntimeData.Kind = kindAndName.Kind
+		env.EnvironmentApplications[i].RuntimeData.Name = kindAndName.Metadata.Name
+		env.EnvironmentApplications[i].RuntimeData.Data = data.Data
 	}
 
 	return nil

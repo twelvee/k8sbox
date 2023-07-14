@@ -21,6 +21,6 @@ type StorageService struct {
 	DeleteEnvironment      func(Environment) error
 	DeleteBox              func(Environment, Box) error
 	GetEnvironments        func(string) ([]Environment, error)
-	GetEnvironment         func(namespace string, id string) (*Environment, error)
+	GetEnvironment         func(namespace string, name string) (*Environment, error)
 	IsEnvironmentSaved     func(Environment) (bool, error)
 }

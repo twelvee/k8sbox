@@ -11,23 +11,41 @@ type Application struct {
 	Chart string `toml:"chart"`
 }
 
+// EnvironmentApplication is your box application inside your environment in a struct
+type EnvironmentApplication struct {
+	Name            string
+	EnvironmentName string
+	Chart           string
+	BoxName         string
+	RuntimeData     ApplicationRuntimeData
+	CreatedAt       string
+}
+
+// ApplicationRuntimeData is runtime application data struct
+type ApplicationRuntimeData struct {
+	Kind string
+	Name string
+	Data []map[string]interface{}
+}
+
 // ApplicationService is a public ApplicationService
 type ApplicationService struct {
 	ValidateApplications          func([]Application) []string
 	ExpandApplications            func([]Application) []Application
-	DescribePod                   func(*kubernetes.Clientset, string, string) error
-	DescribePodTemplate           func(*kubernetes.Clientset, string, string) error
-	DescribeReplicationController func(*kubernetes.Clientset, string, string) error
-	DescribeReplicaSet            func(*kubernetes.Clientset, string, string) error
-	DescribeDeployment            func(*kubernetes.Clientset, string, string) error
-	DescribeControllerRevision    func(*kubernetes.Clientset, string, string) error
-	DescribeDaemonSet             func(*kubernetes.Clientset, string, string) error
-	DescribeStatefulSet           func(*kubernetes.Clientset, string, string) error
-	DescribeJob                   func(*kubernetes.Clientset, string, string) error
-	DescribeCronjob               func(*kubernetes.Clientset, string, string) error
-	DescribeHPA                   func(*kubernetes.Clientset, string, string) error
-	DescribeService               func(*kubernetes.Clientset, string, string) error
-	DescribeIngress               func(*kubernetes.Clientset, string, string) error
+	Describe                      func(*kubernetes.Clientset, string, string, string) (ApplicationRuntimeData, error)
+	DescribePod                   func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribePodTemplate           func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeReplicationController func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeReplicaSet            func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeDeployment            func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeControllerRevision    func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeDaemonSet             func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeStatefulSet           func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeJob                   func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeCronjob               func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeHPA                   func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeService               func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
+	DescribeIngress               func(*kubernetes.Clientset, string, string) (ApplicationRuntimeData, error)
 }
 
 // GetApplicationAliases return a slice of application model name aliases

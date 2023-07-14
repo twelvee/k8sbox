@@ -1,0 +1,30 @@
+{
+  "name": "app",
+  "version": "2.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "@heroicons/vue": "^2.0.18",
+    "codemirror": "^5.65.13",
+    "codemirror-editor-vue3": "^2.3.0",
+    "date-fns": "^2.30.0",
+    "js-cookie": "^3.0.5",
+    "vue": "^3.2.31",
+    "vue-router": "^4.2.2",
+    "vuex": "^4.0.2",
+    "yaml": "^2.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^2.2.4",
+    "@vue/compiler-sfc": "^3.2.31",
+    "autoprefixer": "^10.4.2",
+    "daisyui": "^2.6.0",
+    "postcss": "^8.4.7",
+    "tailwindcss": "^3.0.23",
+    "vite": "^2.8.6"
+  }
+}

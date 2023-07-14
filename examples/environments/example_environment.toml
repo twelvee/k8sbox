@@ -1,5 +1,4 @@
-id = "ttt" # It can be your ${CI_SLUG} for example
-name = "test environment"
+name = "123-environment"
 namespace = "test"
 variables = "${PWD}/examples/environments/.env"
 

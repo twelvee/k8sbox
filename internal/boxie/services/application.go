@@ -18,6 +18,7 @@ func NewApplicationService() structs.ApplicationService {
 	return structs.ApplicationService{
 		ValidateApplications:          validateApplications,
 		ExpandApplications:            ExpandApplications,
+		Describe:                      describe,
 		DescribePod:                   describePod,
 		DescribePodTemplate:           describePodTemplate,
 		DescribeReplicationController: describeReplicationController,
@@ -34,214 +35,242 @@ func NewApplicationService() structs.ApplicationService {
 	}
 }
 
-func describePod(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describe(k8sclient *kubernetes.Clientset, kind, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
+	var describeFunc func(*kubernetes.Clientset, string, string) (structs.ApplicationRuntimeData, error)
+	switch kind {
+	case structs.KIND_POD:
+		describeFunc = describePod
+	case structs.KIND_POD_TEMPLATE:
+		describeFunc = describePodTemplate
+	case structs.KIND_REPLICATION_CONTROLLER:
+		describeFunc = describeReplicationController
+	case structs.KIND_REPLICA_SET:
+		describeFunc = describeReplicaSet
+	case structs.KIND_DEPLOYMENT:
+		describeFunc = describeDeployment
+	case structs.KIND_STATEFUL_SET:
+		describeFunc = describeStatefulSet
+	case structs.KIND_CONTROLLER_REVISION:
+		describeFunc = describeControllerRevision
+	case structs.KIND_DAEMON_SET:
+		describeFunc = describeDaemonSet
+	case structs.KIND_JOB:
+		describeFunc = describeJob
+	case structs.KIND_CRONJOB:
+		describeFunc = describeCronjob
+	case structs.KIND_HPA:
+		describeFunc = describeHPA
+	case structs.KIND_SERVICE:
+		describeFunc = describeService
+	case structs.KIND_INGRESS:
+		describeFunc = describeIngress
+	}
+
+	if describeFunc != nil {
+		rtData, err := describeFunc(k8sclient, namespace, name)
+		if err != nil {
+			return runtimeData, err
+		}
+
+		runtimeData = rtData
+	}
+	return runtimeData, nil
+}
+
+func describePod(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	p, err := k8sclient.CoreV1().Pods(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Pod %s:", p.Name))
-	if len(p.Spec.Containers) > 0 {
-		result = append(result, "Containers:")
-		for _, container := range p.Spec.Containers {
-			result = append(result, fmt.Sprintf("%s (image: %s)", container.Name, container.Image))
-		}
+	m, err := utils.StructToMap(&p)
+	if err != nil {
+		return runtimeData, err
 	}
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describePodTemplate(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describePodTemplate(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	pt, err := k8sclient.CoreV1().PodTemplates(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Pod Template %s:", pt.Name))
-	if len(pt.Template.Spec.Containers) > 0 {
-		result = append(result, "Containers:")
-		for _, container := range pt.Template.Spec.Containers {
-			result = append(result, fmt.Sprintf("%s (image: %s)", container.Name, container.Image))
-		}
+	m, err := utils.StructToMap(&pt)
+	if err != nil {
+		return runtimeData, err
 	}
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describeReplicationController(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeReplicationController(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	rc, err := k8sclient.CoreV1().ReplicationControllers(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Replication Controller %s:", rc.Name))
-	result = append(result, fmt.Sprintf("Replicas: %s", utils.Int32ToString(rc.Status.Replicas)))
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	m, err := utils.StructToMap(&rc)
+	if err != nil {
+		return runtimeData, err
+	}
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describeReplicaSet(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeReplicaSet(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	rs, err := k8sclient.AppsV1().ReplicaSets(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Replica Set %s:", rs.Name))
-	result = append(result, fmt.Sprintf("Available replicas: %s", utils.Int32ToString(rs.Status.AvailableReplicas)))
-	result = append(result, fmt.Sprintf("Replicas: %s", utils.Int32ToString(rs.Status.Replicas)))
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	m, err := utils.StructToMap(&rs)
+	if err != nil {
+		return runtimeData, err
+	}
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describeDeployment(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeDeployment(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	d, err := k8sclient.AppsV1().Deployments(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Deployment %s:", d.Name))
-	result = append(result, fmt.Sprintf("Replicas: %s", utils.Int32ToString(d.Status.Replicas)))
-	if len(d.Spec.Template.Spec.Containers) > 0 {
-		result = append(result, "Containers:")
+	m, err := utils.StructToMap(&d)
+	if err != nil {
+		return runtimeData, err
+	}
+	runtimeData.Data = append(runtimeData.Data, m)
 
-		for _, container := range d.Spec.Template.Spec.Containers {
-			result = append(result, fmt.Sprintf("%s (image: %s)", container.Name, container.Image))
-		}
-	}
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	return runtimeData, nil
 }
 
-func describeStatefulSet(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeStatefulSet(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	ss, err := k8sclient.AppsV1().StatefulSets(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Stateful Set %s:", ss.Name))
-	result = append(result, fmt.Sprintf("Available replicas: %s", utils.Int32ToString(ss.Status.AvailableReplicas)))
-	result = append(result, fmt.Sprintf("Replicas: %s", utils.Int32ToString(ss.Status.Replicas)))
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	m, err := utils.StructToMap(&ss)
+	if err != nil {
+		return runtimeData, err
+	}
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describeControllerRevision(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeControllerRevision(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	cr, err := k8sclient.AppsV1().ControllerRevisions(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Controller Revision %s:", cr.Name))
-	result = append(result, fmt.Sprintf("Revision: %s", utils.Int32ToString(int32(cr.Revision))))
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	m, err := utils.StructToMap(&cr)
+	if err != nil {
+		return runtimeData, err
+	}
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describeDaemonSet(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeDaemonSet(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	ds, err := k8sclient.AppsV1().DaemonSets(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Daemon Set %s:", ds.Name))
-	result = append(result, fmt.Sprintf("Number ready: %s", utils.Int32ToString(ds.Status.NumberReady)))
-	if len(ds.Spec.Template.Spec.Containers) > 0 {
-		result = append(result, "Containers:")
-		for _, container := range ds.Spec.Template.Spec.Containers {
-			result = append(result, fmt.Sprintf("%s (image: %s)", &container.Name, container.Image))
-		}
+	m, err := utils.StructToMap(&ds)
+	if err != nil {
+		return runtimeData, err
 	}
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describeJob(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeJob(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	j, err := k8sclient.BatchV1().Jobs(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Job %s:", j.Name))
-	result = append(result, fmt.Sprintf("Active: %s", utils.Int32ToString(j.Status.Active)))
-	result = append(result, fmt.Sprintf("Failed: %s", utils.Int32ToString(j.Status.Failed)))
-	result = append(result, fmt.Sprintf("Succeeded: %s", utils.Int32ToString(j.Status.Succeeded)))
-	result = append(result, fmt.Sprintf("Start time: %s", j.Status.StartTime.Time))
-	result = append(result, fmt.Sprintf("Completion time: %s", j.Status.CompletionTime.Time))
-	if len(j.Spec.Template.Spec.Containers) > 0 {
-		result = append(result, "Containers:")
-		for _, container := range j.Spec.Template.Spec.Containers {
-			result = append(result, fmt.Sprintf("%s (image: %s)", container.Name, container.Image))
-		}
+	m, err := utils.StructToMap(&j)
+	if err != nil {
+		return runtimeData, err
 	}
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describeCronjob(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeCronjob(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	cj, err := k8sclient.BatchV1().CronJobs(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Cron Job %s:", cj.Name))
-	result = append(result, fmt.Sprintf("Schedule: %s", cj.Spec.Schedule))
-	result = append(result, fmt.Sprintf("Time zone: %s", cj.Spec.TimeZone))
+	m, err := utils.StructToMap(&cj)
+	if err != nil {
+		return runtimeData, err
+	}
+	runtimeData.Data = append(runtimeData.Data, m)
 
-	if len(cj.Spec.JobTemplate.Spec.Template.Spec.Containers) > 0 {
-		result = append(result, "Containers:")
-		for _, container := range cj.Spec.JobTemplate.Spec.Template.Spec.Containers {
-			result = append(result, fmt.Sprintf("%s (image: %s)", container.Name, container.Image))
-		}
-	}
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	return runtimeData, nil
 }
 
-func describeHPA(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeHPA(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	hpa, err := k8sclient.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Horizontal Pod Autoscaler %s:", hpa.Name))
-	result = append(result, fmt.Sprintf("Min replicas: %s", utils.Int32ToString(*hpa.Spec.MinReplicas)))
-	result = append(result, fmt.Sprintf("Max replicas: %s", utils.Int32ToString(hpa.Spec.MaxReplicas)))
-	result = append(result, fmt.Sprintf("Target CPU Utilization Percentage: %s", utils.Int32ToString(*hpa.Spec.TargetCPUUtilizationPercentage)))
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	m, err := utils.StructToMap(&hpa)
+	if err != nil {
+		return runtimeData, err
+	}
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describeService(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeService(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	s, err := k8sclient.CoreV1().Services(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Service %s:", s.Name))
-	result = append(result, fmt.Sprintf("Cluster IP: %s", s.Spec.ClusterIP))
-	result = append(result, fmt.Sprintf("External Name: %s", s.Spec.ExternalName))
-	result = append(result, fmt.Sprintf("External IPs: %s", strings.Join(s.Spec.ExternalIPs, ", ")))
-	result = append(result, fmt.Sprintf("Load Balancer IP: %s", s.Spec.LoadBalancerIP))
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	m, err := utils.StructToMap(&s)
+	if err != nil {
+		return runtimeData, err
+	}
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
-func describeIngress(k8sclient *kubernetes.Clientset, namespace string, name string) error {
+func describeIngress(k8sclient *kubernetes.Clientset, namespace string, name string) (structs.ApplicationRuntimeData, error) {
+	var runtimeData structs.ApplicationRuntimeData
 	i, err := k8sclient.NetworkingV1().Ingresses(namespace).Get(context.Background(), name, v1.GetOptions{})
 	if err != nil {
-		return err
+		return runtimeData, err
 	}
-	var result []string
-	result = append(result, fmt.Sprintf("Ingres %s:", i.Name))
-	result = append(result, "Rules: ")
-	for _, rules := range i.Spec.Rules {
-		result = append(result, fmt.Sprintf("Host: %s", rules.Host))
-		for _, http := range rules.HTTP.Paths {
-			result = append(result, fmt.Sprintf("%s => %s", http.Path, http.Backend.Service.Name))
-		}
+	m, err := utils.StructToMap(&i)
+	if err != nil {
+		return runtimeData, err
 	}
-	fmt.Println(strings.Join(result, "\r\n"))
-	return nil
+	runtimeData.Data = append(runtimeData.Data, m)
+
+	return runtimeData, nil
 }
 
 func validateApplications(applications []structs.Application) []string {

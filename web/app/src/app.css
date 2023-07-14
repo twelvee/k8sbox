@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.CodeMirror *{
+    font-family: sans-serif, monospace !important;
+    font-size: 16px;
+}

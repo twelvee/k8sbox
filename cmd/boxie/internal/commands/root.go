@@ -7,6 +7,7 @@ import (
 	"github.com/twelvee/boxie/cmd/boxie/internal/commands/describe"
 	"github.com/twelvee/boxie/cmd/boxie/internal/commands/get"
 	"github.com/twelvee/boxie/cmd/boxie/internal/commands/run"
+	"github.com/twelvee/boxie/cmd/boxie/internal/commands/serve"
 )
 
 var (
@@ -25,6 +26,7 @@ func NewRootCommand() *cobra.Command {
 	root.AddCommand(get.NewGetCommand())
 	root.AddCommand(delete.NewDeleteCommand())
 	root.AddCommand(describe.NewDescribeCommand())
+	root.AddCommand(serve.NewServeCommand())
 	root.AddCommand(NewShelfCommand())
 
 	return root

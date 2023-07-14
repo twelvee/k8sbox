@@ -23,9 +23,19 @@ func GetApplicationService() structs.ApplicationService {
 	return services.NewApplicationService()
 }
 
+// GetUserService will put and return a new UserService
+func GetUserService() structs.UserService {
+	return services.NewUserService()
+}
+
 // GetStorageService will put and return a new StorageService
 func GetStorageService() structs.StorageService {
 	return services.NewStorageService()
+}
+
+// GetClusterService will put and return a new ClusterService
+func GetClusterService() structs.ClusterService {
+	return services.NewClusterService()
 }
 
 // GetTomlFormatter will put and return a new TomlFormatter
