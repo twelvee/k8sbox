@@ -1,3 +1,6 @@
 /.idea
 /vendor
 /bin
+/shelf_sqlite
+/web/app/node_modules
+/web/app/dist
